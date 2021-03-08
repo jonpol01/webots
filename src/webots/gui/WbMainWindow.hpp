@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class WbOdeDebugger;
 class WbRecentFilesList;
 class WbRobot;
 class WbSimulationView;
+class WbStreamingServer;
 
 class QMenu;
 class QMenuBar;
@@ -47,7 +48,7 @@ class WbMainWindow : public QMainWindow {
   Q_PROPERTY(QString toolBarAlign MEMBER mToolBarAlign READ toolBarAlign WRITE setToolBarAlign)
 
 public:
-  explicit WbMainWindow(bool minimizedOnStart, QWidget *parent = NULL);
+  explicit WbMainWindow(bool minimizedOnStart, WbStreamingServer *streamingServer, QWidget *parent = NULL);
   virtual ~WbMainWindow();
 
   void lockFullScreen(bool isLocked);
@@ -59,10 +60,10 @@ public:
   const QString &coreIconPath() const { return mCoreIconPath; }
   const QString &toolBarAlign() const { return mToolBarAlign; }
 
-  void setEnabledIconPath(QString &path) { mEnabledIconPath = path; }
-  void setDisabledIconPath(QString &path) { mDisabledIconPath = path; }
-  void setCoreIconPath(QString &path) { mCoreIconPath = path; }
-  void setToolBarAlign(QString &align) { mToolBarAlign = align; }
+  void setEnabledIconPath(const QString &path) { mEnabledIconPath = path; }
+  void setDisabledIconPath(const QString &path) { mDisabledIconPath = path; }
+  void setCoreIconPath(const QString &path) { mCoreIconPath = path; }
+  void setToolBarAlign(const QString &align) { mToolBarAlign = align; }
 
   void restorePreferredGeometry(bool minimizedOnStart = false);
 
@@ -77,6 +78,7 @@ public slots:
   void showGuidedTour();
   void setView3DSize(const QSize &size);
   void restoreRenderingDevicesPerspective();
+  void resetWorldFromGui();
 
 protected:
   bool event(QEvent *event) override;
@@ -91,7 +93,7 @@ private slots:
   void saveWorld();
   void saveWorldAs(bool skipSimulationHasRunWarning = false);
   void reloadWorld();
-  void resetWorld();
+  void resetGui(bool restartControllers);
   void importVrml();
   void exportVrml();
   void exportHtml();
@@ -110,7 +112,6 @@ private slots:
   void openGithubRepository();
   void openCyberboticsWebsite();
   void openBugReport();
-  void openSupportTicket();
   void openNewsletterSubscription();
   void openDiscord();
   void openTwitter();
@@ -145,7 +146,7 @@ private:
   void showOnlineBook(const QString &);
   void showHtmlRobotWindow(WbRobot *);
   int mExitStatus;
-  WbConsole *mConsole;
+  QList<WbConsole *> mConsoles;
   WbDocumentation *mDocumentation;
   WbBuildEditor *mTextEditor;
   WbSimulationView *mSimulationView;
@@ -200,6 +201,8 @@ private:
   // QSS properties
   QString mEnabledIconPath, mDisabledIconPath, mCoreIconPath, mToolBarAlign;
 
+  WbStreamingServer *mStreamingServer;
+
 private slots:
   void updateProjectPath(const QString &oldPath, const QString &newPath);
   void simulationQuit(int exitStatus);
@@ -213,6 +216,9 @@ private slots:
 
   void toggleFullScreen(bool enabled);
   void exitFullScreen();
+
+  void openNewConsole(const QString &name = QString("Console"));
+  void handleConsoleClosure();
 
   void openUrl(const QString &fileName, const QString &message, const QString &title);
 

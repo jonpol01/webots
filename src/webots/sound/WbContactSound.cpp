@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ WbContactSound::~WbContactSound() {
   WbSoundEngine::deleteSource(mSource);
 }
 
+// cppcheck-suppress constParameter
 bool WbContactSound::doesGeomsMatch(const dGeomID &geom1, const dGeomID &geom2) const {
   return ((geom1 == mGeom1 && geom2 == mGeom2) || (geom1 == mGeom2 && geom2 == mGeom1));
 }

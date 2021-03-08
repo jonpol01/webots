@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@
 #include "WbPreferences.hpp"
 #include "WbProtoModel.hpp"
 #include "WbRgb.hpp"
-#include "WbRobot.hpp"
 #include "WbSFNode.hpp"
-#include "WbSensor.hpp"
 #include "WbSimulationState.hpp"
 #include "WbViewpoint.hpp"
 #include "WbWorld.hpp"
@@ -34,7 +32,7 @@
 #include "WbWrenShaders.hpp"
 #include "WbWrenTextureOverlay.hpp"
 
-#include "../../lib/Controller/api/messages.h"
+#include "../../controller/c/messages.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDataStream>
@@ -180,36 +178,37 @@ void WbAbstractCamera::deleteWren() {
     resetStaticCounters();
 }
 
-void WbAbstractCamera::initializeSharedMemory() {
+void WbAbstractCamera::initializeImageSharedMemory() {
   mHasSharedMemoryChanged = true;
   delete mImageShm;
+  mImageShm = initializeSharedMemory();
+  if (mImageShm)
+    mImageData = (unsigned char *)mImageShm->data();
+}
+
+WbSharedMemory *WbAbstractCamera::initializeSharedMemory() {
   QString sharedMemoryName =
     QString("Webots_Camera_Image_%1_%2").arg((long)QCoreApplication::applicationPid()).arg(cCameraNumber);
-#ifndef _WIN32
-  mImageShm = new WbPosixSharedMemory(sharedMemoryName);
-#else
-  mImageShm = new QSharedMemory(sharedMemoryName);
-#endif
+  WbSharedMemory *imageShm = new WbSharedMemory(sharedMemoryName);
   // A controller of the previous simulation may have not released cleanly the shared memory (e.g. when the controller crashes).
   // This can be detected by trying to attach, and the shared memory may be cleaned by detaching.
-  if (mImageShm->attach())
-    mImageShm->detach();
-  if (!mImageShm->create(size())) {
+  if (imageShm->attach())
+    imageShm->detach();
+  if (!imageShm->create(size())) {
     QString message = tr("Cannot allocate shared memory. The shared memory is required for the cameras. The shared memory of "
                          "your OS is probably full. Please check your shared memory setup.");
     warn(message);
-    delete mImageShm;
-    mImageShm = NULL;
-    return;
+    delete imageShm;
+    return NULL;
   }
-  mImageData = (unsigned char *)mImageShm->data();
+  return imageShm;
 }
 
 void WbAbstractCamera::setup() {
   cCameraNumber++;
   cCameraCounter++;
 
-  initializeSharedMemory();
+  initializeImageSharedMemory();
   if (!mImageShm)
     return;
 
@@ -226,13 +225,19 @@ void WbAbstractCamera::setup() {
   }
 }
 
+bool WbAbstractCamera::needToRender() const {
+  return mSensor->isEnabled() && mSensor->needToRefresh();
+}
+
 void WbAbstractCamera::updateCameraTexture() {
-  if (isPowerOn() && mSensor->needToRefresh()) {
+  if (isPowerOn() && needToRender()) {
     // update camera overlay before main rendering
     computeValue();
-    mSensor->updateTimer();
-    mImageChanged = true;
-  } else if (mSensor->isRemoteModeEnabled() && mOverlay)
+    if (WbAbstractCamera::needToRender()) {
+      mSensor->updateTimer();
+      mImageChanged = true;
+    }
+  } else if (mOverlay && mSensor->isEnabled() && mSensor->isRemoteModeEnabled())
     // keep updating the overlay in remote mode
     mOverlay->requestUpdateTexture();
 }
@@ -256,7 +261,9 @@ void WbAbstractCamera::computeValue() {
   for (int i = 0; i < invisibleNodesCount; ++i)
     wr_node_set_visible(WR_NODE(mInvisibleNodes.at(i)->wrenNode()), false);
 
-  mWrenCamera->render();
+  if (WbAbstractCamera::needToRender())
+    mWrenCamera->render();
+  render();
 
   for (int i = 0; i < invisibleNodesCount; ++i)
     wr_node_set_visible(WR_NODE(mInvisibleNodes.at(i)->wrenNode()), true);
@@ -265,13 +272,11 @@ void WbAbstractCamera::computeValue() {
     log->stopMeasure(WbPerformanceLog::DEVICE_RENDERING, deviceName());
 }
 
-void WbAbstractCamera::copyImageToSharedMemory() {
-  unsigned char *data = image();
-  if (mWrenCamera) {
-    mWrenCamera->enableCopying(true);
-    mWrenCamera->copyContentsToMemory(data);
+void WbAbstractCamera::copyImageToSharedMemory(WbWrenCamera *camera, unsigned char *data) {
+  if (camera) {
+    camera->enableCopying(true);
+    camera->copyContentsToMemory(data);
   }
-  mImageChanged = false;
 }
 
 void WbAbstractCamera::reset() {
@@ -292,7 +297,7 @@ void WbAbstractCamera::resetSharedMemory() {
   if (hasBeenSetup()) {
     // the previous shared memory will be released by the new controller start
     cCameraNumber++;
-    initializeSharedMemory();
+    initializeImageSharedMemory();
     mSharedMemoryReset = true;
   }
 }
@@ -309,8 +314,12 @@ void WbAbstractCamera::writeAnswer(QDataStream &stream) {
   if (mHasSharedMemoryChanged && mImageShm) {
     stream << (short unsigned int)tag();
     stream << (unsigned char)C_CAMERA_SHARED_MEMORY;
-    QByteArray n = QFile::encodeName(mImageShm ? mImageShm->nativeKey() : "");
-    stream.writeRawData(n.constData(), n.size() + 1);
+    if (mImageShm) {
+      stream << (int)(mImageShm->size());
+      QByteArray n = QFile::encodeName(mImageShm->nativeKey());
+      stream.writeRawData(n.constData(), n.size() + 1);
+    } else
+      stream << (int)(0);
     mHasSharedMemoryChanged = false;
   }
 
@@ -352,12 +361,7 @@ bool WbAbstractCamera::handleCommand(QDataStream &stream, unsigned char command)
       // update motion blur factor
       applyMotionBlurToWren();
 
-      if (mSensor->isEnabled())
-        connect(WbSimulationState::instance(), &WbSimulationState::cameraRenderingStarted, this,
-                &WbAbstractCamera::updateCameraTexture, Qt::UniqueConnection);
-      else
-        disconnect(WbSimulationState::instance(), &WbSimulationState::cameraRenderingStarted, this,
-                   &WbAbstractCamera::updateCameraTexture);
+      emit enabled(this, isEnabled());
 
       if (!hasBeenSetup()) {
         setup();
@@ -366,8 +370,10 @@ bool WbAbstractCamera::handleCommand(QDataStream &stream, unsigned char command)
 
       break;
     case C_CAMERA_GET_IMAGE:
-      if (mImageChanged)
-        copyImageToSharedMemory();
+      if (mImageChanged) {
+        copyImageToSharedMemory(mWrenCamera, image());
+        mImageChanged = false;
+      }
       mImageReady = true;
       break;
     default:
@@ -460,7 +466,7 @@ void WbAbstractCamera::createWrenCamera() {
   applyNoiseToWren();
 
   if (mExternalWindowEnabled)
-    updateTextureUpdateNotifications();
+    updateTextureUpdateNotifications(mExternalWindowEnabled);
 }
 
 void WbAbstractCamera::updateBackground() {
@@ -524,7 +530,7 @@ void WbAbstractCamera::createWrenOverlay() {
   else
     mOverlay->setVisible(true, areOverlaysEnabled());
 
-  emit textureIdUpdated(textureGLId());
+  emit textureIdUpdated(textureGLId(), MAIN_TEXTURE);
 }
 
 /////////////////////
@@ -563,7 +569,8 @@ void WbAbstractCamera::updateFieldOfView() {
   if (WbFieldChecker::resetDoubleIfNonPositive(this, mFieldOfView, 0.7854))
     return;
   if (!mSpherical->value() && fieldOfView() > M_PI) {
-    warn(tr("Invalid 'fieldOfView' changed to 0.7854. The field of view is limited to pi if the 'spherical' field is FALSE."));
+    parsingWarn(
+      tr("Invalid 'fieldOfView' changed to 0.7854. The field of view is limited to pi if the 'spherical' field is FALSE."));
     mFieldOfView->setValue(0.7854);
     return;
   }
@@ -841,18 +848,24 @@ void WbAbstractCamera::updateFrustumDisplay() {
   wr_node_set_visible(WR_NODE(mFrustumDisplayTransform), true);
 }
 
-void WbAbstractCamera::updateTextureUpdateNotifications() {
+void WbAbstractCamera::updateTextureUpdateNotifications(bool enabled) {
   assert(mWrenCamera);
-  if (mExternalWindowEnabled)
+  if (enabled)
     connect(mWrenCamera, &WbWrenCamera::textureUpdated, this, &WbRenderingDevice::textureUpdated, Qt::UniqueConnection);
   else
     disconnect(mWrenCamera, &WbWrenCamera::textureUpdated, this, &WbRenderingDevice::textureUpdated);
-  mWrenCamera->enableTextureUpdateNotifications(mExternalWindowEnabled);
+  mWrenCamera->enableTextureUpdateNotifications(enabled);
+}
+
+void WbAbstractCamera::enableExternalWindowForAttachedCamera(bool enabled) {
+  if (mExternalWindowEnabled)
+    return;
+  updateTextureUpdateNotifications(enabled);
 }
 
 void WbAbstractCamera::enableExternalWindow(bool enabled) {
   WbRenderingDevice::enableExternalWindow(enabled);
   mExternalWindowEnabled = enabled;
   if (mWrenCamera)
-    updateTextureUpdateNotifications();
+    updateTextureUpdateNotifications(mExternalWindowEnabled);
 }

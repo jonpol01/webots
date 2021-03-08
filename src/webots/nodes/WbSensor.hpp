@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ class WbRobot;
 class WbSensor : public QObject {
   Q_OBJECT
 public:
-  // destructor
   WbSensor();
   virtual ~WbSensor() {}
 
@@ -55,7 +54,9 @@ public:
 
   // remote control
   bool isRemoteModeEnabled() const { return mIsRemoteMode; }
-  void connectToRobotSignal(const WbRobot *robot);
+  void connectToRobotSignal(const WbRobot *robot, bool connectRemoteMode = true);
+
+  void reset();
 
 signals:
   void stateChanged();

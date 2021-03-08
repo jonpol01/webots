@@ -1,4 +1,4 @@
-#VRML_SIM R2019b utf8
+#VRML_SIM R2021a utf8
 WorldInfo {
   info [
     "This demonstration shows a DJI Mavic 2 PRO flying over a rural area."
@@ -10,22 +10,19 @@ WorldInfo {
     linear 0.5
     angular 0.5
   }
+  coordinateSystem "NUE"
 }
 Viewpoint {
   orientation 0.07050665473376751 -0.9955409361549733 -0.06266622757062013 4.81348648259329
   position 3.097238269380304 0.6132726075362769 0.5611797778962901
   near 0.2
-  exposure 4
   follow "Mavic 2 PRO"
   followSmoothness 0.2
 }
 TexturedBackground {
+  luminosity 3
 }
-DirectionalLight {
-  ambientIntensity 1
-  direction -0.6 -1 0.55
-  intensity 1.2
-  castShadows TRUE
+TexturedBackgroundLight {
 }
 Floor {
   size 400 400
@@ -46,7 +43,8 @@ Road {
     200 0 200
   ]
   splineSubdivision 8
-  appearance SquarePavement {
+  appearance Pavement {
+    type "black stone"
   }
 }
 Windmill {
@@ -145,7 +143,6 @@ Mavic2Pro {
       width 400
       height 240
       near 0.2
-      exposure 4
     }
   ]
 }

@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ void WbTelemetry::send(const QString &operation, const QString &file) {
 }
 
 void WbTelemetry::sendRequest(const QString &operation) {
-  QNetworkRequest request(QUrl("https://www.cyberbotics.com/telemetry.php"));
+  QNetworkRequest request(QUrl("https://cyberbotics.com/telemetry.php"));
   QByteArray data;
   data.append("id=");
   const int id = WbPreferences::instance()->value("General/telemetryId", 0).toString().toInt();
@@ -61,15 +61,15 @@ void WbTelemetry::sendRequest(const QString &operation) {
   data.append("&glVersion=");
   data.append(QUrl::toPercentEncoding(WbSysInfo::openGLVersion()));
   data.append("&textureQuality=");
-  data.append(WbPreferences::instance()->value("OpenGL/textureQuality", 0).toString());
+  data.append(WbPreferences::instance()->value("OpenGL/textureQuality", 0).toString().toUtf8());
   data.append("&disableAntiAliasing=");
-  data.append(WbPreferences::instance()->value("OpenGL/disableAntiAliasing", 0).toString());
+  data.append(WbPreferences::instance()->value("OpenGL/disableAntiAliasing", 0).toString().toUtf8());
   data.append("&disableShadows=");
-  data.append(WbPreferences::instance()->value("OpenGL/disableShadows", 0).toString());
+  data.append(WbPreferences::instance()->value("OpenGL/disableShadows", 0).toString().toUtf8());
   data.append("&GTAO=");
-  data.append(WbPreferences::instance()->value("OpenGL/GTAO", 0).toString());
+  data.append(WbPreferences::instance()->value("OpenGL/GTAO", 0).toString().toUtf8());
   data.append("&build=");
-  data.append(QString::number(UNIX_TIMESTAMP));
+  data.append(QString::number(UNIX_TIMESTAMP).toUtf8());
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
   QNetworkReply *reply = WbNetwork::instance()->networkAccessManager()->post(request, data);
   if (id == 0) {

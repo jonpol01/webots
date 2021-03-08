@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include "WbWrenRenderingContext.hpp"
 #include "WbWrenTextureOverlay.hpp"
 
-#include "../../lib/Controller/api/messages.h"
+#include "../../controller/c/messages.h"
 
 #include <QtCore/QDataStream>
 
@@ -67,24 +67,22 @@ void WbRangeFinder::postFinalize() {
   connect(mResolution, &WbSFDouble::changed, this, &WbRangeFinder::updateResolution);
 }
 
-void WbRangeFinder::initializeSharedMemory() {
-  WbAbstractCamera::initializeSharedMemory();
+void WbRangeFinder::initializeImageSharedMemory() {
+  WbAbstractCamera::initializeImageSharedMemory();
   if (mImageShm) {
     // initialize the shared memory with a black image
     float *im = rangeFinderImage();
-    for (int i = 0; i < width() * height(); i++)
+    const int size = width() * height();
+    for (int i = 0; i < size; i++)
       im[i] = 0.0f;
   }
 }
 
 QString WbRangeFinder::pixelInfo(int x, int y) const {
-  QString info;
   WbRgb color;
   if (hasBeenSetup())
     color = mWrenCamera->copyPixelColourValue(x, y);
-
-  info.sprintf("depth(%d,%d)=%f", x, y, color.red());
-  return info;
+  return QString::asprintf("depth(%d,%d)=%f", x, y, color.red());
 }
 
 void WbRangeFinder::addConfigureToStream(QDataStream &stream, bool reconfigure) {
@@ -121,7 +119,7 @@ void WbRangeFinder::updateNear() {
     return;
 
   if (mNear->value() > mMinRange->value()) {
-    warn(tr("'near' is greater than to 'minRange'. Setting 'near' to %1.").arg(mMinRange->value()));
+    parsingWarn(tr("'near' is greater than to 'minRange'. Setting 'near' to %1.").arg(mMinRange->value()));
     mNear->setValueNoSignal(mMinRange->value());
     return;
   }
@@ -135,19 +133,19 @@ void WbRangeFinder::updateMinRange() {
     return;
 
   if (mMinRange->value() < mNear->value()) {
-    warn(tr("'minRange' is less than 'near'. Setting 'minRange' to %1.").arg(mNear->value()));
+    parsingWarn(tr("'minRange' is less than 'near'. Setting 'minRange' to %1.").arg(mNear->value()));
     mMinRange->setValueNoSignal(mNear->value());
   }
   if (mMaxRange->value() <= mMinRange->value()) {
     if (mMaxRange->value() == 0.0) {
       double newMaxRange = mMinRange->value() + 1.0;
-      warn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
+      parsingWarn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
       mMaxRange->setValueNoSignal(newMaxRange);
     } else {
       double newMinRange = mMaxRange->value() - 1.0;
       if (newMinRange < 0.0)
         newMinRange = 0.0;
-      warn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'minRange' to %1.").arg(newMinRange));
+      parsingWarn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'minRange' to %1.").arg(newMinRange));
       mMinRange->setValueNoSignal(newMinRange);
     }
   }
@@ -167,7 +165,7 @@ void WbRangeFinder::updateMinRange() {
 void WbRangeFinder::updateMaxRange() {
   if (mMaxRange->value() <= mMinRange->value()) {
     double newMaxRange = mMinRange->value() + 1.0;
-    warn(tr("'maxRange' is less or equal to 'minRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
+    parsingWarn(tr("'maxRange' is less or equal to 'minRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
     mMaxRange->setValueNoSignal(newMaxRange);
   }
 

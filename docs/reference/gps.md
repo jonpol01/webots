@@ -52,7 +52,7 @@ This field accepts any value in the interval (0.0, inf).
 #### `wb_gps_get_values`
 #### `wb_gps_get_speed`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -126,7 +126,7 @@ public class GPS extends Device {
 wb_gps_enable(tag, sampling_period)
 wb_gps_disable(tag)
 period = wb_gps_get_sampling_period(tag)
-[x y z] = wb_gps_get_values(tag)
+x_y_z_array = wb_gps_get_values(tag)
 speed = wb_gps_get_speed(tag)
 ```
 
@@ -136,7 +136,7 @@ speed = wb_gps_get_speed(tag)
 
 | name | service/topic | data type | data type definition |
 | --- | --- | --- | --- |
-| `/<device_name>/values` | `topic` | [`sensor_msgs::NavSatFix`](http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html) | [`Header`](http://docs.ros.org/api/std_msgs/html/msg/Header.html) `header`<br/>[`sensor_msgs/NavSatStatus`](http://docs.ros.org/api/sensor_msgs/html/msg/NavSatStatus.html) `status`<br/>`float64 latitude`<br/>`float64 longitude`<br/>`float64 altitude`<br/>`float64[9] position_covariance`<br/>`uint8 COVARIANCE_TYPE_UNKNOWN=0`<br/>`uint8 COVARIANCE_TYPE_APPROXIMATED=1`<br/>`uint8 COVARIANCE_TYPE_DIAGONAL_KNOWN=2`<br/>`uint8 COVARIANCE_TYPE_KNOWN=3`<br/>`uint8 position_covariance_type`<br/><br/>Note: coordinates may be set locally (X-Y-Z) instead of globally (lat-long-alt) depending on the GPS coordinate system used. |
+| `/<device_name>/values` | `topic` | [`sensor_msgs::NavSatFix`](http://docs.ros.org/api/sensor_msgs/html/msg/NavSatFix.html) for `WGS84` GPS coordinate system<br/><br/>or<br/><br/>[`geometry_msgs::PointStamped`](http://docs.ros.org/api/geometry_msgs/html/msg/PointStamped.html) for `local` GPS coordinate system | [`Header`](http://docs.ros.org/api/std_msgs/html/msg/Header.html) `header`<br/>[`sensor_msgs/NavSatStatus`](http://docs.ros.org/api/sensor_msgs/html/msg/NavSatStatus.html) `status`<br/>`float64 latitude`<br/>`float64 longitude`<br/>`float64 altitude`<br/>`float64[9] position_covariance`<br/>`uint8 COVARIANCE_TYPE_UNKNOWN=0`<br/>`uint8 COVARIANCE_TYPE_APPROXIMATED=1`<br/>`uint8 COVARIANCE_TYPE_DIAGONAL_KNOWN=2`<br/>`uint8 COVARIANCE_TYPE_KNOWN=3`<br/>`uint8 position_covariance_type`<br/><br/>or<br/><br/>[`Header`](http://docs.ros.org/api/std_msgs/html/msg/Header.html) `header`<br/>`float64 x`<br/>`float64 y`<br/>`float64 z`|
 | `/<device_name>/speed` | `topic` | webots_ros::Float64Stamped | [`Header`](http://docs.ros.org/api/std_msgs/html/msg/Header.html) `header`<br/>`float64 data` |
 | `/<device_name>/enable` | `service` | [`webots_ros::set_int`](ros-api.md#common-services) | |
 | `/<device_name>/get_sampling_period` | `service` | [`webots_ros::get_int`](ros-api.md#common-services) | |
@@ -177,7 +177,7 @@ If these values are needed for a longer period they must be copied.
 
 #### `wb_gps_get_coordinate_system`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -271,7 +271,7 @@ If the value of the `gpsCoordinateSystem` field is "local" then this function re
 
 #### `wb_gps_convert_to_degrees_minutes_seconds`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 

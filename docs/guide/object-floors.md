@@ -19,18 +19,16 @@ CircleArena {
   SFString   name            "circle arena"
   SFFloat    radius          1.0
   SFString   contactMaterial "default"
-  SFNode     floorAppearance ChequeredParquetry {}
+  SFNode     floorAppearance Parquetry { type "chequered" }
   SFVec2f    floorTileSize   0.5 0.5
   SFFloat    wallThickness   0.01
   SFFloat    wallHeight      0.1
   SFNode     wallAppearance  BrushedAluminium {}
   SFInt32    subdivision     48
-  hiddenField MFString   floorTextureUrl "textures/checkered_parquetry.jpg"
-  hiddenField MFString   wallTextureUrl  "textures/metal.jpg"
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/CircleArena.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/floors/protos/CircleArena.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/CircleArena.proto]({{ url.github_tree }}/projects/objects/floors/protos/CircleArena.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -71,11 +69,11 @@ Floor {
   SFString   contactMaterial "default"
   SFVec2f    size            10 10
   SFVec2f    tileSize        0.5 0.5
-  SFNode     appearance      ChequeredParquetry {}
+  SFNode     appearance      Parquetry { type "chequered" }
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/Floor.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/floors/protos/Floor.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/Floor.proto]({{ url.github_tree }}/projects/objects/floors/protos/Floor.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -108,18 +106,14 @@ RectangleArena {
   SFString   contactMaterial "default"
   SFVec2f    floorSize       1 1
   SFVec2f    floorTileSize   0.5 0.5
-  SFNode     floorAppearance ChequeredParquetry {}
+  SFNode     floorAppearance Parquetry { type "chequered" }
   SFFloat    wallThickness   0.01
   SFFloat    wallHeight      0.1
   SFNode     wallAppearance  BrushedAluminium {}
-  hiddenField MFString   floorTextureUrl "textures/checkered_parquetry.jpg"
-  hiddenField MFString   wallTextureUrl  "textures/metal.jpg"
-  hiddenField SFColor    wallColor 0.8 0.8 0.8
-  hiddenField SFVec2f    wallTileSize 0.5 0.5
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/RectangleArena.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/floors/protos/RectangleArena.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/RectangleArena.proto]({{ url.github_tree }}/projects/objects/floors/protos/RectangleArena.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -158,8 +152,7 @@ UnevenTerrain {
   SFVec3f    size           50 5 50
   SFInt32    xDimension     50
   SFInt32    zDimension     50
-  SFNode     appearance     SandyGround {}
-  SFVec2f    textureScale   1.0 1.0
+  SFNode     appearance     SandyGround { textureTransform TextureTransform { scale 50 50 } }
   SFInt32    randomSeed     1
   SFBool     flatCenter     FALSE
   SFBool     flatBounds     FALSE
@@ -167,7 +160,7 @@ UnevenTerrain {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/UnevenTerrain.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/floors/protos/UnevenTerrain.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/floors/protos/UnevenTerrain.proto]({{ url.github_tree }}/projects/objects/floors/protos/UnevenTerrain.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -181,8 +174,6 @@ UnevenTerrain {
 - `zDimension`: Defines the number of points in the grid height array in the y direction.
 
 - `appearance`: Defines the appearance of the terrain.
-
-- `textureScale`: Defines the size of the textures used for the terrain.
 
 - `randomSeed`: Defines the seed of the random number generator. A value smaller or equal to 0 sets a random seed.
 

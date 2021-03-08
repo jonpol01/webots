@@ -23,7 +23,7 @@ CautionPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CautionPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/CautionPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CautionPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/CautionPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -32,7 +32,7 @@ CautionPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 ## CautionSign
 
@@ -58,7 +58,7 @@ CautionSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CautionSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/CautionSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CautionSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/CautionSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -101,14 +101,14 @@ ControlledStreetLight {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ControlledStreetLight.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/ControlledStreetLight.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ControlledStreetLight.proto]({{ url.github_tree }}/projects/objects/traffic/protos/ControlledStreetLight.proto)"
 
 > **License**: Creative Commons Attribution 3.0 United States License (original model by Andrew Kator & Jennifer Legaz).
 [More information.](https://creativecommons.org/licenses/by/3.0/legalcode)
 
 ### ControlledStreetLight Field Summary
 
-- `controller`: Defines the controller used to make the LED blink.
+- `controller`: Defines the controller used to make the [LED](../reference/led.md) blink.
 
 - `beamWidth`: Defines the beam width of the spot light.
 
@@ -145,7 +145,7 @@ CrossRoadsTrafficLight {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CrossRoadsTrafficLight.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/CrossRoadsTrafficLight.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/CrossRoadsTrafficLight.proto]({{ url.github_tree }}/projects/objects/traffic/protos/CrossRoadsTrafficLight.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -201,7 +201,7 @@ DirectionPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/DirectionPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/DirectionPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/DirectionPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/DirectionPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -254,7 +254,7 @@ DivergentIndicator {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/DivergentIndicator.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/DivergentIndicator.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/DivergentIndicator.proto]({{ url.github_tree }}/projects/objects/traffic/protos/DivergentIndicator.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -292,7 +292,7 @@ ExitPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ExitPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/ExitPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ExitPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/ExitPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -301,7 +301,7 @@ ExitPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 ## ExitSign
 
@@ -327,7 +327,7 @@ ExitSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ExitSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/ExitSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ExitSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/ExitSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -338,7 +338,7 @@ ExitSign {
 
 - `radius`: Defines the radius of the sign pole.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 - `signBoards`: Defines the boards.
 
@@ -366,7 +366,7 @@ GenericTrafficLight {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/GenericTrafficLight.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/GenericTrafficLight.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/GenericTrafficLight.proto]({{ url.github_tree }}/projects/objects/traffic/protos/GenericTrafficLight.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -396,33 +396,33 @@ Derived from [Solid](../reference/solid.md).
 
 ```
 HighwayPole {
-  SFVec3f       translation           0 0 0
-  SFRotation    rotation              0 1 0 0
-  SFString      name                  "highway pole"
-  SFString      type                  "cylinder"
-  SFInt32       stand                 1
-  SFFloat       height                6
-  SFFloat       length                8
-  SFFloat       thickness             0.2
-  SFColor       color                 0.258824 0.258824 0.258824
-  SFFloat       curveRadius           0.4
-  MFNode        rightHorizontalSigns  [ HighwaySign { name "vertical sign" } ]
-  MFNode        rightVerticalSigns    [ HighwaySign { name "horizontal sign" height 2.1 length 3.2 texture "textures/highway_sign_la_ciotat.jpg" } ]
-  MFNode        leftHorizontalSigns   [ ]
-  MFNode        leftVerticalSigns     [ ]
+  SFVec3f     translation           0 0 0
+  SFRotation  rotation              0 1 0 0
+  SFString    name                  "highway pole"
+  SFString    type                  "cylinder"
+  SFInt32     stand                 1
+  SFFloat     height                6
+  SFFloat     length                8
+  SFFloat     thickness             0.2
+  SFColor     color                 0.258824 0.258824 0.258824
+  SFFloat     curveRadius           0.4
+  MFNode      rightHorizontalSigns  [ HighwaySign { name "vertical sign" } ]
+  MFNode      rightVerticalSigns    [ HighwaySign { name "horizontal sign" height 2.1 length 3.2 texture "textures/highway_sign_la_ciotat.jpg" } ]
+  MFNode      leftHorizontalSigns   [ ]
+  MFNode      leftVerticalSigns     [ ]
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/HighwayPole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/HighwayPole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/HighwayPole.proto]({{ url.github_tree }}/projects/objects/traffic/protos/HighwayPole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
 
 ### HighwayPole Field Summary
 
-- `type`: Defines the shape of the pole.
+- `type`: Defines the shape of the pole. This field accepts the following values: `"cylinder"`, `"box"` and `"H-shape"`.
 
-- `stand`: Defines the number of stands.
+- `stand`: Defines the number of stands. This field accepts the following values: `1` and `2`.
 
 - `height`: Defines the height of the pole.
 
@@ -468,7 +468,7 @@ HighwaySign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/HighwaySign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/HighwaySign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/HighwaySign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/HighwaySign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -508,7 +508,7 @@ OrderPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/OrderPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/OrderPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/OrderPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/OrderPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -517,7 +517,7 @@ OrderPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 ## OrderSign
 
@@ -543,7 +543,7 @@ OrderSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/OrderSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/OrderSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/OrderSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/OrderSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -581,7 +581,7 @@ ParkingLines {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ParkingLines.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/ParkingLines.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ParkingLines.proto]({{ url.github_tree }}/projects/objects/traffic/protos/ParkingLines.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -616,7 +616,7 @@ ParkingMeter {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ParkingMeter.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/ParkingMeter.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/ParkingMeter.proto]({{ url.github_tree }}/projects/objects/traffic/protos/ParkingMeter.proto)"
 
 > **License**: Creative Commons Attribution 4.0 International License.
 [More information.](https://creativecommons.org/licenses/by/4.0/legalcode)
@@ -644,7 +644,7 @@ PedestrianCrossing {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/PedestrianCrossing.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/PedestrianCrossing.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/PedestrianCrossing.proto]({{ url.github_tree }}/projects/objects/traffic/protos/PedestrianCrossing.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -678,7 +678,7 @@ Pole {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/Pole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/Pole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/Pole.proto]({{ url.github_tree }}/projects/objects/traffic/protos/Pole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -711,7 +711,7 @@ RectangularPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/RectangularPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/RectangularPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/RectangularPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/RectangularPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -720,9 +720,9 @@ RectangularPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
-- `size`: Defines the size of the panel
+- `size`: Defines the size of the panel.
 
 ## SignPole
 
@@ -748,7 +748,7 @@ SignPole {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SignPole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/SignPole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SignPole.proto]({{ url.github_tree }}/projects/objects/traffic/protos/SignPole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -786,7 +786,7 @@ SpeedLimitPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SpeedLimitPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/SpeedLimitPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SpeedLimitPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/SpeedLimitPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -795,7 +795,7 @@ SpeedLimitPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 ## SpeedLimitSign
 
@@ -821,7 +821,7 @@ SpeedLimitSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SpeedLimitSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/SpeedLimitSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/SpeedLimitSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/SpeedLimitSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -859,7 +859,7 @@ StopPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StopPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/StopPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StopPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/StopPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -868,7 +868,7 @@ StopPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 ## StopSign
 
@@ -894,7 +894,7 @@ StopSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StopSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/StopSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StopSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/StopSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -927,18 +927,18 @@ StreetLight {
   SFVec3f    translation   0 0 0
   SFRotation rotation      0 1 0 0
   SFString   name          "street light"
-  SFVec3f    attenuation   0 1 0
   SFFloat    beamWidth     1.1
   SFColor    color         1 1 1
   SFFloat    cutOffAngle   1.4
   SFVec3f    direction     0 -1 -0.1
   SFBool     on            TRUE
   SFFloat    radius        1000
+  SFFloat    intensity     30
   SFBool     castShadows   FALSE
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StreetLight.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/StreetLight.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/StreetLight.proto]({{ url.github_tree }}/projects/objects/traffic/protos/StreetLight.proto)"
 
 > **License**: Creative Commons Attribution 3.0 United States License (original model by Andrew Kator & Jennifer Legaz).
 [More information.](https://creativecommons.org/licenses/by/3.0/legalcode)
@@ -956,6 +956,8 @@ StreetLight {
 - `on`: Defines whether the spot light is on or off.
 
 - `radius`: Defines the radius of the spot light.
+
+- `intensity`: Defines the radius of the spot light.
 
 - `castShadows`: Defines whether the spot light casts shadows.
 
@@ -980,7 +982,7 @@ TrafficCone {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficCone.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficCone.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficCone.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficCone.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -1011,18 +1013,18 @@ TrafficLight {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLight.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficLight.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLight.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficLight.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
 
 ### TrafficLight Field Summary
 
-- `red_light`: Defines the name of the red LED device.
+- `red_light`: Defines the name of the red [LED](../reference/led.md) device.
 
-- `orange_light`: Defines the name of the orange LED device.
+- `orange_light`: Defines the name of the orange [LED](../reference/led.md) device.
 
-- `green_light`: Defines the name of the green LED device.
+- `green_light`: Defines the name of the green [LED](../reference/led.md) device.
 
 - `lamp_geometry`: Defines the geometry of the lamps.
 
@@ -1045,7 +1047,7 @@ TrafficLightArrowLampGeometry {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightArrowLampGeometry.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficLightArrowLampGeometry.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightArrowLampGeometry.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficLightArrowLampGeometry.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -1073,7 +1075,7 @@ TrafficLightBigPole {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightBigPole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficLightBigPole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightBigPole.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficLightBigPole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -1112,18 +1114,18 @@ TrafficLightHorizontal {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightHorizontal.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficLightHorizontal.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightHorizontal.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficLightHorizontal.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
 
 ### TrafficLightHorizontal Field Summary
 
-- `red_light`: Defines the name of the red LED device.
+- `red_light`: Defines the name of the red [LED](../reference/led.md) device.
 
-- `orange_light`: Defines the name of the orange LED device.
+- `orange_light`: Defines the name of the orange [LED](../reference/led.md) device.
 
-- `green_light`: Defines the name of the green LED device.
+- `green_light`: Defines the name of the green [LED](../reference/led.md) device.
 
 - `lamp_geometry`: Defines the geometry of the lamps.
 
@@ -1146,7 +1148,7 @@ TrafficLightStandardLampGeometry {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightStandardLampGeometry.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/TrafficLightStandardLampGeometry.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/TrafficLightStandardLampGeometry.proto]({{ url.github_tree }}/projects/objects/traffic/protos/TrafficLightStandardLampGeometry.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -1172,7 +1174,7 @@ WorkBarrier {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/WorkBarrier.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/WorkBarrier.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/WorkBarrier.proto]({{ url.github_tree }}/projects/objects/traffic/protos/WorkBarrier.proto)"
 
 > **License**: Creative Commons Attribution 4.0 International License.
 [More information.](https://creativecommons.org/licenses/by/4.0/legalcode)
@@ -1205,7 +1207,7 @@ YieldPanel {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/YieldPanel.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/YieldPanel.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/YieldPanel.proto]({{ url.github_tree }}/projects/objects/traffic/protos/YieldPanel.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -1214,7 +1216,7 @@ YieldPanel {
 
 - `signImage`: Defines the texture used for the sign.
 
-- `color`: Defines the color of the panel
+- `color`: Defines the color of the panel.
 
 - `textureRotation`: Defines the rotation of the texture used for the sign.
 
@@ -1242,7 +1244,7 @@ YieldSign {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/YieldSign.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/traffic/protos/YieldSign.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/traffic/protos/YieldSign.proto]({{ url.github_tree }}/projects/objects/traffic/protos/YieldSign.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)

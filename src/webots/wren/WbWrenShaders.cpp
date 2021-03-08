@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,7 +83,6 @@ enum SHADER {
   SHADER_IBL_DIFFUSE_IRRADIANCE_BAKE,
   SHADER_IBL_SPECULAR_IRRADIANCE_BAKE,
   SHADER_IBL_BRDF_BAKE,
-  SHADER_IBL_EQUIRECTANGULAR_BAKE,
   SHADER_LENS_DISTORTION,
   SHADER_LENS_FLARE,
   SHADER_LENS_FLARE_BLEND,
@@ -103,6 +102,7 @@ enum SHADER {
   SHADER_PICKING,
   SHADER_POINT_SET,
   SHADER_RANGE_NOISE,
+  SHADER_SEGMENTATION,
   SHADER_SHADOW_VOLUME,
   SHADER_SIMPLE,
   SHADER_SKYBOX,
@@ -642,30 +642,6 @@ WrShaderProgram *WbWrenShaders::iblBrdfBakingShader() {
   return gShaders[SHADER_IBL_BRDF_BAKE];
 }
 
-WrShaderProgram *WbWrenShaders::iblEquirectangularShader() {
-  if (!gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE]) {
-    gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE] = wr_shader_program_new();
-
-    const float projectionAndViewDefaults[16] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                                                 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
-    wr_shader_program_create_custom_uniform(gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE], "projection",
-                                            WR_SHADER_PROGRAM_UNIFORM_TYPE_MAT4F,
-                                            reinterpret_cast<const char *>(&projectionAndViewDefaults));
-
-    wr_shader_program_create_custom_uniform(gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE], "view",
-                                            WR_SHADER_PROGRAM_UNIFORM_TYPE_MAT4F,
-                                            reinterpret_cast<const char *>(&projectionAndViewDefaults));
-
-    wr_shader_program_use_uniform(gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE], WR_GLSL_LAYOUT_UNIFORM_TEXTURE0);
-
-    buildShader(gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE], QFileInfo("gl:shaders/bake_cubemap.vert"),
-                QFileInfo("gl:shaders/bake_equirectangular_to_cube.frag"));
-  }
-
-  return gShaders[SHADER_IBL_EQUIRECTANGULAR_BAKE];
-}
-
 WrShaderProgram *WbWrenShaders::lensDistortionShader() {
   if (!gShaders[SHADER_LENS_DISTORTION]) {
     gShaders[SHADER_LENS_DISTORTION] = wr_shader_program_new();
@@ -811,9 +787,10 @@ WrShaderProgram *WbWrenShaders::overlayShader() {
 
     wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE0);       // background
     wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE1);       // main
-    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE2);       // foreground
-    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE3);       // close button
-    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE4);       // resize button
+    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE2);       // mask
+    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE3);       // foreground
+    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE4);       // close button
+    wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_TEXTURE5);       // resize button
     wr_shader_program_use_uniform(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_CHANNEL_COUNT);  // color channel count
 
     wr_shader_program_use_uniform_buffer(gShaders[SHADER_OVERLAY], WR_GLSL_LAYOUT_UNIFORM_BUFFER_OVERLAY);
@@ -851,7 +828,6 @@ WrShaderProgram *WbWrenShaders::pbrShader() {
     wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_TEXTURE7);  // background texture (for displays)
     wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_TEXTURE8);  // pen texture
     wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_CUBE0);  // irradiance cubemap
-    wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_CUBE1);  // specular cubemap
     wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_MODEL_TRANSFORM);
     wr_shader_program_use_uniform(gShaders[SHADER_PBR], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_TRANSFORM);
 
@@ -891,9 +867,13 @@ WrShaderProgram *WbWrenShaders::pbrStencilAmbientEmissiveShader() {
     // irradiance cubemap
     wr_shader_program_use_uniform(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_CUBE0);
     // specular cubemap
-    wr_shader_program_use_uniform(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_CUBE1);
     wr_shader_program_use_uniform(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE], WR_GLSL_LAYOUT_UNIFORM_MODEL_TRANSFORM);
     wr_shader_program_use_uniform(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE], WR_GLSL_LAYOUT_UNIFORM_TEXTURE_TRANSFORM);
+
+    int wireframeRendering = 0;
+    wr_shader_program_create_custom_uniform(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE], "wireframeRendering",
+                                            WR_SHADER_PROGRAM_UNIFORM_TYPE_INT,
+                                            reinterpret_cast<const char *>(&wireframeRendering));
 
     wr_shader_program_use_uniform_buffer(gShaders[SHADER_PBR_STENCIL_AMBIENT_EMISSIVE],
                                          WR_GLSL_LAYOUT_UNIFORM_BUFFER_MATERIAL_PBR);
@@ -1047,11 +1027,35 @@ WrShaderProgram *WbWrenShaders::rangeNoiseShader() {
     wr_shader_program_create_custom_uniform(gShaders[SHADER_RANGE_NOISE], "intensity", WR_SHADER_PROGRAM_UNIFORM_TYPE_FLOAT,
                                             reinterpret_cast<const char *>(&intensity));
 
+    float minRange = 0.0f;
+    wr_shader_program_create_custom_uniform(gShaders[SHADER_RANGE_NOISE], "minRange", WR_SHADER_PROGRAM_UNIFORM_TYPE_FLOAT,
+                                            reinterpret_cast<const char *>(&minRange));
+
+    float maxRange = 0.0f;
+    wr_shader_program_create_custom_uniform(gShaders[SHADER_RANGE_NOISE], "maxRange", WR_SHADER_PROGRAM_UNIFORM_TYPE_FLOAT,
+                                            reinterpret_cast<const char *>(&maxRange));
+
     ::buildShader(gShaders[SHADER_RANGE_NOISE], QFileInfo("gl:shaders/range_noise.vert"),
                   QFileInfo("gl:shaders/range_noise.frag"));
   }
 
   return gShaders[SHADER_RANGE_NOISE];
+}
+
+WrShaderProgram *WbWrenShaders::segmentationShader() {
+  if (!gShaders[SHADER_SEGMENTATION]) {
+    gShaders[SHADER_SEGMENTATION] = wr_shader_program_new();
+
+    wr_shader_program_use_uniform(gShaders[SHADER_SEGMENTATION], WR_GLSL_LAYOUT_UNIFORM_MODEL_TRANSFORM);
+
+    wr_shader_program_use_uniform_buffer(gShaders[SHADER_SEGMENTATION], WR_GLSL_LAYOUT_UNIFORM_BUFFER_MATERIAL_PHONG);
+    wr_shader_program_use_uniform_buffer(gShaders[SHADER_SEGMENTATION], WR_GLSL_LAYOUT_UNIFORM_BUFFER_CAMERA_TRANSFORMS);
+
+    ::buildShader(gShaders[SHADER_SEGMENTATION], QFileInfo("gl:shaders/segmentation.vert"),
+                  QFileInfo("gl:shaders/segmentation.frag"));
+  }
+
+  return gShaders[SHADER_SEGMENTATION];
 }
 
 WrShaderProgram *WbWrenShaders::shadowVolumeShader() {

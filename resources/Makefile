@@ -1,4 +1,4 @@
-# Copyright 1996-2019 Cyberbotics Ltd.
+# Copyright 1996-2021 Cyberbotics Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
 distrib: release
 
 release debug profile:
+	@echo "#"; echo "# *** translations ***"
 	@+make -s -C translations $@
-	@+make -s -C languages $@
+	@echo "#"; echo "# *** projects ***"
 	@+make -s -C projects $@
-	@+make -s -C osm_importer $@
+	@echo "#"; echo "# *** web/wwi ***"
 	@+make -s -C web/wwi $@
 
 cleanse: clean
 
 clean:
 	@+make -s -C translations $@
-	@+make -s -C languages $@
 	@+make -s -C projects $@
-	@+make -s -C osm_importer $@
 	@-rm -rf sumo_exporter/*.pyc
 	@+make -s -C web/wwi $(MAKECMDGOALS)

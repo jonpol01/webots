@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ class WbStreamingTcpServer : public QTcpServer {
 public:
   explicit WbStreamingTcpServer(QObject *parent = NULL) : QTcpServer(parent), mSsl(false){};
 
-  void setSslConfiguration(QSslConfiguration &configuration);
+  void setSslConfiguration(const QSslConfiguration &configuration);
 
 protected:
   void incomingConnection(qintptr socketDescriptor) override;

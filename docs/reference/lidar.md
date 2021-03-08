@@ -43,7 +43,7 @@ Be aware that the point cloud mode is computationally expensive and can therefor
 
 A point of the lidar point cloud is defined like this:
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -133,7 +133,7 @@ With lidar devices, all the points are not acquired at the exact same time but r
 
 ### Field Summary
 
-- The `tiltAngle` field defines the tilt angle of the sensor (rotation around the X axis of to the [Lidar](#lidar) node).
+- The `tiltAngle` field defines the tilt angle of the sensor (rotation around the x-axis of to the [Lidar](#lidar) node).
 
 - The `horizontalResolution` field defines the number of points returned by layers.
 
@@ -153,9 +153,11 @@ A typically good value for this field is to set it just big enough so that the s
 More information about the frustum is provided in the [frustum](camera.md#frustum) section of the [Camera](camera.md) node.
 
 - The `minRange` field defines the minimum range of the lidar, objects closer to the lidar than the minimum range are not detected (but still occlude other objects).
+If the range value is smaller than the `minRange` value then infinity is returned.
 
 - The `maxRange` field defines the distance between the lidar and the far clipping plane of the OpenGL view frustum.
 This field defines the maximum range that the lidar can achieve and so the maximum possible value of the range image (in meter).
+If the range value is bigger than the `maxRange` value then infinity is returned.
 
 - The `type` field should either be 'fixed' or 'rotating', it defines if the lidar has a rotating or fixed head.
 
@@ -190,12 +192,11 @@ The value of this field should be smaller or equal to the value of the `maxFrequ
 #### Rotating Lidar
 
 A lidar is said rotating if its `type` field is set to 'rotating'.
-In that case, the node inserted in the `rotatingHead` rotates along the Y axis at the frequency defined in the `defaultFrequency` field.
+In that case, the node inserted in the `rotatingHead` rotates along the y-axis at the frequency defined in the `defaultFrequency` field.
 This rotation starts as soon as the lidar is enabled.
-The internal depth camera is attached to this node and is therefore also rotating along the Y axis.
+The internal depth camera is attached to this node and is therefore also rotating along the y-axis.
 
 > **Note**: The internal depth camera is using a horizontal field of view defined in the `fieldOfView` field, but since it is rotating, the actual field of view is 2 * &pi;.
-The same comment applies to the horizontal resolution, the internal depth camera is using a horizontal resolution defined in the `horizontalResolution` field, but the actual returned resolution of the lidar is equal to: horizontalResolution * 2 * pi / fieldOfView.
 
 > **Note**: If the resulting point cloud of a rotating lidar looks distorted, it probably means that you have to reduce the simulation time step.
 
@@ -205,7 +206,7 @@ The same comment applies to the horizontal resolution, the internal depth camera
 #### `wb_lidar_disable`
 #### `wb_lidar_get_sampling_period`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -304,7 +305,7 @@ The `wb_lidar_get_sampling_period` function returns the period given into the `w
 #### `wb_lidar_disable_point_cloud`
 #### `wb_lidar_is_point_cloud_enabled`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -403,7 +404,7 @@ First the lidar should be enabled using the `wb_lidar_enable` function.
 #### `wb_lidar_get_range_image`
 #### `wb_lidar_get_layer_range_image`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -508,7 +509,7 @@ Their content are identical but their handling is of course different.
 #### `wb_lidar_get_layer_point_cloud`
 #### `wb_lidar_get_number_of_points`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -545,8 +546,8 @@ namespace webots {
 from controller import Lidar
 
 class Lidar (Device):
-    def getPointCloud(self):
-    def getLayerPointCloud(self, layer):
+    def getPointCloud(self, data_type='list'):
+    def getLayerPointCloud(self, layer, data_type='list'):
     def getNumberOfPoints(self):
     # ...
 ```
@@ -608,12 +609,16 @@ The `wb_lidar_get_layer_point_cloud` function is a convenient way of getting dir
 
 The `wb_lidar_get_number_of_points` function returns the total number of points contained in the point cloud (each layer is assumed to have the same number of points associated to).
 
+> **Note** [Python]: The `getPointCloud` and `getLayerPointCloud` methods have `data_type` parameter which can be `list` (default) or `buffer`.
+If `data_type` is equal to `list` then the function returns a list of points, but it is slow as it has to create a list of objects.
+If `data_type` is equal to `buffer` then the function returns `bytearray` and it is fast as there is no memory copying.
+
 ---
 
 #### `wb_lidar_get_frequency`
 #### `wb_lidar_set_frequency`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -703,7 +708,7 @@ The `frequency` argument should be in the range [minFrequency; maxFrequency].
 #### `wb_lidar_get_horizontal_resolution`
 #### `wb_lidar_get_number_of_layers`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -791,7 +796,7 @@ The `wb_lidar_get_number_of_layers` function returns the number of layers of the
 #### `wb_lidar_get_min_frequency`
 #### `wb_lidar_get_max_frequency`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -877,7 +882,7 @@ The `wb_lidar_get_min_frequency` and `wb_lidar_get_max_frequency` functions retu
 #### `wb_lidar_get_fov`
 #### `wb_lidar_get_vertical_fov`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -965,7 +970,7 @@ The `wb_lidar_get_vertical_fov` function returns the vertical field of view of t
 #### `wb_lidar_get_min_range`
 #### `wb_lidar_get_max_range`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 

@@ -25,7 +25,7 @@ Ceiling {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Ceiling.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/Ceiling.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Ceiling.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/Ceiling.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -57,6 +57,7 @@ Door {
   SFString   name                   "door"
   SFVec3f    size                   1 2.4 0.2
   SFBool     canBeOpen              TRUE
+  SFFloat    position               0
   SFBool     jointAtLeft            TRUE
   SFBool     selfClosing            FALSE
   SFFloat    doorThickness          0.05
@@ -67,11 +68,12 @@ Door {
   SFNode     wallAppearance         Roughcast {}
   SFNode     frameAppearance        VarnishedPine {}
   SFNode     doorHandle             DoorLever {}
+  MFNode     doorSlot               []
   SFBool     castShadows            TRUE
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Door.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/Door.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Door.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/Door.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -81,6 +83,8 @@ Door {
 - `size`: Defines the width, height and thickness of the door wall frame.
 
 - `canBeOpen`: Defines whether the door is connected to the frame throught a hinge-joint.
+
+- `position`: Defines the position (aperture) of the door.
 
 - `jointAtLeft`: Defines on which side the door is connected to the frame.
 
@@ -98,9 +102,11 @@ Door {
 
 - `wallAppearance`: Defines the wall's appearance.
 
-- `frameAppearance`: Defines the frame's appearance
+- `frameAppearance`: Defines the frame's appearance.
 
 - `doorHandle`: Defines an optional door handle.
+
+- `doorSlot`: Extends the door with new nodes.
 
 - `castShadows`: Defines whether this object should cast shadows.
 
@@ -131,7 +137,7 @@ DoorKnob {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/DoorKnob.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/DoorKnob.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/DoorKnob.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/DoorKnob.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -181,7 +187,7 @@ DoorLever {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/DoorLever.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/DoorLever.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/DoorLever.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/DoorLever.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -226,7 +232,7 @@ GenericDoorAppearance {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/GenericDoorAppearance.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/GenericDoorAppearance.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/GenericDoorAppearance.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/GenericDoorAppearance.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -259,7 +265,7 @@ Radiator {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Radiator.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/Radiator.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Radiator.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/Radiator.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -294,7 +300,7 @@ Wall {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Wall.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/Wall.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Wall.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/Wall.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -328,7 +334,7 @@ WallPlug {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/WallPlug.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/WallPlug.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/WallPlug.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/WallPlug.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -370,7 +376,7 @@ Window {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Window.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/apartment_structure/protos/Window.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/apartment\_structure/protos/Window.proto]({{ url.github_tree }}/projects/objects/apartment_structure/protos/Window.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)

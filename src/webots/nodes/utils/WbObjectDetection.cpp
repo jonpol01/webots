@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ void WbObjectDetection::setCollided(double depth) {
 bool WbObjectDetection::recomputeRayDirection(WbSolid *device, const WbVector3 &devicePosition, const WbMatrix3 &deviceRotation,
                                               const WbMatrix3 &deviceInverseRotation, const WbAffinePlane *frustumPlanes) {
   assert(mGeom);
-  mObject->updateTransformAfterPhysicsStep();
+  mObject->updateTransformForPhysicsStep();
   // recompute ray properties
   if (!computeObject(devicePosition, deviceRotation, deviceInverseRotation, frustumPlanes))
     return false;

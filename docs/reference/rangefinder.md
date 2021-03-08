@@ -37,7 +37,7 @@ An object can be semi-transparent either if its texture has an alpha channel, or
 The value is limited to the range 0 to &pi; radians if the `spherical` field is set to FALSE, otherwise there is no upper limit.
 Since range-finder pixels are squares, the vertical field of view can be computed from the `width`, `height` and horizontal `fieldOfView`:
 
-    *vertical FOV = fieldOfView * height / width*
+    *vertical FOV = 2 * atan(tan(fieldOfView * 0.5) * (height / width))*
 
 - `width`: width of the image in pixels
 
@@ -56,9 +56,11 @@ A typically good value for this field is to set it just big enough so that the s
 More information about the frustum is provided in the [frustum](camera.md#frustum) section of the [Camera](camera.md) node.
 
 - The `minRange` field defines the minimum range of the range-finder (objects closer to the range-finder than the minimum range are not detected (but still occlude other objects).
+If the depth is smaller than the `minRange` value then infinity is returned.
 
 - The `maxRange` defines the distance between the range-finder and the far clipping plane of the OpenGL view frustum.
 This field defines the maximum range that a range-finder can achieve and so the maximum possible value of the range image (in meter).
+If the depth is bigger than the `maxRange` value then infinity is returned.
 
 - If the `motionBlur` field is greater than 0.0, the image is blurred by the motion of the range-finder or objects in the field of view.
 More information on motion blur is provided in the [motionBlur](camera.md) field description of the [Camera](camera.md) node.
@@ -96,7 +98,7 @@ Then, after closing the window, the overlay will be automatically restored.
 #### `wb_range_finder_disable`
 #### `wb_range_finder_get_sampling_period`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -193,7 +195,7 @@ The `wb_range_finder_get_sampling_period` function returns the period given into
 
 #### `wb_range_finder_get_fov`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -274,7 +276,7 @@ These functions allow the controller to get the value of the field of view (fov)
 #### `wb_range_finder_get_width`
 #### `wb_range_finder_get_height`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -360,7 +362,7 @@ These functions return the width and height of a range-finder image as defined i
 #### `wb_range_finder_get_min_range`
 #### `wb_range_finder_get_max_range`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -446,7 +448,7 @@ These functions return the minRange and maxRange parameters of a range-finder de
 #### `wb_range_finder_get_range_image`
 #### `wb_range_finder_image_get_depth`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -481,7 +483,7 @@ namespace webots {
 from controller import RangeFinder
 
 class RangeFinder (Device):
-    def getRangeImage(self):
+    def getRangeImage(self, data_type='list'):
     def getRangeImageArray(self):
     @staticmethod
     def rangeImageGetDepth(image, width, x, y):
@@ -548,14 +550,23 @@ The `range_finder_width` parameter can be obtained from the `wb_range_finder_get
 The `x` and `y` parameters are the coordinates of the pixel in the image.
 
 > **Note** [Python]: The RangeFinder class has two methods for getting the range-finder image.
-The `getRangeImage` function returns a one-dimensional list of floats, while the `getRangeImageArray` function returns a two-dimensional list of floats.
+The `getRangeImage` function, by default, returns a one-dimensional list of floats, while the `getRangeImageArray` function returns a two-dimensional list of floats.
 Their content are identical but their handling is of course different.
+
+> `getRangeImage` takes a `data_type` keyword parameter, supporting either `list` (default) or `buffer`.
+> If `buffer`, the function will return a `bytes` object containing the native machine encoding for a buffer of `float` values, closely resembling the C API.
+> `buffer` is significantly faster than `list`, and can easily be wrapped using external libraries such as NumPy:
+
+> ```python
+> image_bytes = range_finder.getRangeImage(data_type="buffer")
+> image_np = np.frombuffer(image_bytes, dtype=np.float32)
+> ```
 
 ---
 
 #### `wb_range_finder_save_image`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -627,24 +638,24 @@ success = wb_range_finder_save_image(tag, 'filename', quality)
 
 ##### Description
 
-*save a range-finder image in PNG, JPEG or TIFF format*
+*save a range-finder image in PNG, JPEG or HDR format*
 
 The `wb_range_finder_save_image` function allows the user to save a `tag` image which was previously obtained with the `wb_range_finder_get_image` function.
-The image can be saved in a file using the PNG, JPEG, or TIFF format.
+The image can be saved in a file using the PNG, JPEG, or HDR format.
 The image format is specified by the `filename` parameter.
 If `filename` is terminated by `.png`, the image format is PNG.
 Similarly, if `filename` is terminated by `.jpg` or `.jpeg`, the image format is JPEG.
-Lastly, if `filename` is terminated by `.tif` or `.tiff`, the image format is TIFF.
+Lastly, if `filename` is terminated by `.hdr` or `.HDR`, the image format is HDR.
 Other image formats are not supported.
 The `quality` parameter is useful only for JPEG images.
 It defines the JPEG quality of the saved image.
 The `quality` parameter should be in the range 1 (worst quality) to 100 (best quality).
 Low quality JPEG files will use less disk space.
-For PNG and TIFF images, the `quality` parameter is ignored.
+For PNG and HDR images, the `quality` parameter is ignored.
 
 PNG and JPEG images are saved using an 8-bit RGB (grayscale) encoding.
-TIFF images are saved as 32-bit floating-point single-channel images.
-For PNG and JPEG, depth data is stored in the range `0` to `255`, and for TIFF depth data is in the range `0.0` to `1.0`.
+HDR images are saved as 32-bit floating-point single-channel images.
+For PNG and JPEG, depth data is stored in the range `0` to `255`.
 This depth data can thus be extracted for further use by reading the image file.
 
 The return value of the `wb_range_finder_save_image` function is 0 in case of success.

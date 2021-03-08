@@ -27,18 +27,22 @@ function wbSlugify(obj) {
 showdown.extension('wbVariables', function() {
   // static variables to maintain
   // TODO: could be computed
+  const branch = (typeof setup !== 'undefined' && typeof setup.branch !== 'undefined') ? setup.branch : 'released';
   var vars = {
     webots: {
       version: {
-        major: 'R2019b',
+        major: 'R2021a',
         // full is equal to major for the first major version
         // and contains the revision number for subsequent versions
-        full: 'R2019b revision 1',
-        package: 'R2019b-rev1'
+        full: 'R2021a revision 1',
+        package: 'R2021a-rev1'
       }
     },
     date: {
-      year: 2019
+      year: 2021
+    },
+    url: { 
+      github_tree: `https://github.com/cyberbotics/webots/tree/${branch}`
     }
   };
 
@@ -206,12 +210,12 @@ showdown.extension('wbSpoiler', function() {
     {
       type: 'lang',
       filter: function(text, converter, options) {
-        text = text.replace(/%spoiler\s*"(.*)"\n*(^(?:(?!%end).)*\n)*\n%end/gim, function(match, title, content) {
+        text = text.replace(/%spoiler\s*\"(.*)\"\n(^(?:(?!%end).+\n*)*\n)*\n%end/gim, function(match, title, content) {
           var replacement =
             '<details>\n' +
             '  <summary>' + title + '</summary>\n' +
             '  ' + content + '\n' +
-            '</details>\n'
+            '</details>\n';
           return replacement;
         });
         return text;
@@ -287,12 +291,12 @@ showdown.extension('wbTabComponent', function() {
     {
       type: 'lang',
       filter: function(text, converter, options) {
-        text = text.replace(/%tab-component([^]+?)%end/gi, function(match, content) {
+        text = text.replace(/%tab-component\s+"([^]+?)"([^]+?)%end/gi, function(match, tabTitle, content) {
           tabComponentCounter++;
           var buttons = '';
           var first = true;
           var subText = content.replace(/%tab\s+"([^]+?)"([^]+?)%tab-end/gi, function(subMatch, title, subContent) {
-            buttons += '<button name="' + title.toLowerCase() + '" class="tab-links' + (first ? ' active' : '') + '" onclick="openTabFromEvent(event, \'' + title + '\')">' + title + '</button>';
+            buttons += '<button name="' + title.toLowerCase() + '" class="tab-links' + (first ? ' active' : '') + '" onclick="openTabFromEvent(event, \'tab-' + tabTitle + '\', \'' + title + '\')">' + title + '</button>';
             var result = '<div class="tab-content" name="' + title.toLowerCase() + '"' + (first ? ' style="display:block"' : '') + ' tabid="' + tabComponentCounter + '">' + converter.makeHtml(subContent) + '</div>';
             first = false;
             return result;

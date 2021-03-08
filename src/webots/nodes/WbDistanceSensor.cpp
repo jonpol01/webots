@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@
 #include "WbWrenRenderingContext.hpp"
 #include "WbWrenShaders.hpp"
 
-#include "../../lib/Controller/api/messages.h"
+#include "../../controller/c/messages.h"
 
 #include <wren/config.h>
 #include <wren/dynamic_mesh.h>
@@ -271,7 +271,7 @@ void WbDistanceSensor::updateRaySetup() {
   if (WbFieldChecker::resetDoubleIfNonPositiveAndNotDisabled(this, mResolution, -1, -1))
     return;  // in order to avoiding passing twice in this function
   if (mRayType == LASER && mNumberOfRays->value() > 1) {
-    warn(tr("'type' \"laser\" must have one single ray."));
+    parsingWarn(tr("'type' \"laser\" must have one single ray."));
     mNumberOfRays->setValue(1);
     return;  // in order to avoiding passing twice in this function
   }
@@ -451,7 +451,7 @@ void WbDistanceSensor::setSensorRays() {
 }
 
 void WbDistanceSensor::updateRaysSetupIfNeeded() {
-  updateTransformAfterPhysicsStep();
+  updateTransformForPhysicsStep();
   setSensorRays();
 }
 
@@ -480,7 +480,7 @@ bool WbDistanceSensor::refreshSensorIfNeeded() {
 
 void WbDistanceSensor::reset() {
   WbSolidDevice::reset();
-  wr_node_set_visible(WR_NODE(mTransform), false);
+  updateOptionalRendering(WbWrenRenderingContext::VF_DISTANCE_SENSORS_RAYS);
 }
 
 void WbDistanceSensor::computeValue() {
@@ -520,7 +520,7 @@ void WbDistanceSensor::computeValue() {
 
         WbRgb pickedColor;
         double roughness, occlusion;
-        shape->pickColor(pickedColor, WbRay(trans, r), &roughness, &occlusion);
+        shape->pickColor(WbRay(trans, r), pickedColor, &roughness, &occlusion);
 
         const double infraRedFactor = 0.8 * pickedColor.red() * (1 - 0.5 * roughness) * (1 - 0.5 * occlusion) + 0.2;
         averageInfraRedFactor += infraRedFactor * mRays[i].weight();
@@ -619,6 +619,12 @@ void WbDistanceSensor::addConfigure(QDataStream &stream) {
   stream << (double)mLut->minValue();
   stream << (double)mLut->maxValue();
   stream << (double)mAperture->value();
+  stream << (int)mLookupTable->size();
+  for (int i = 0; i < mLookupTable->size(); i++) {
+    stream << (double)mLookupTable->item(i).x();
+    stream << (double)mLookupTable->item(i).y();
+    stream << (double)mLookupTable->item(i).z();
+  }
   mNeedToReconfigure = false;
 }
 

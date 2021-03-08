@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -233,9 +233,10 @@ void WbLight::exportNodeFields(WbVrmlWriter &writer) const {
   findField("on", true)->write(writer);
   findField("color", true)->write(writer);
   findField("intensity", true)->write(writer);
+  findField("ambientIntensity", true)->write(writer);
   findField("castShadows", true)->write(writer);
   if (writer.isX3d() && castShadows()) {
-    QHash<QString, QString> x3dExportParameters = WbWorld::instance()->perspective()->x3dExportParameters();
+    QMap<QString, QString> x3dExportParameters = WbWorld::instance()->perspective()->x3dExportParameters();
     if (x3dExportParameters.contains("shadowMapSize"))
       writer << " shadowMapSize=\'" << x3dExportParameters.value("shadowMapSize") << "\'";
     else

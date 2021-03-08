@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2019 Cyberbotics Ltd.
+ * Copyright 1996-2021 Cyberbotics Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,8 +222,10 @@ static void run() {
 
   /* ...otherwise, there is data to read, so read & process. */
   n = recv(fd, buffer, 256, 0);
-  if (n < 0)
+  if (n < 0) {
     printf("error reading from socket\n");
+    return;
+  }
   buffer[n] = '\0';
   printf("Received %d bytes: %s\n", n, buffer);
 

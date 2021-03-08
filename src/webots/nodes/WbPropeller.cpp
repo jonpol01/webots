@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,6 +45,9 @@ void WbPropeller::init() {
   mPosition = 0.0;
   mHelixType = SLOW_HELIX;
   mHelix = NULL;
+
+  mCurrentThrust = 0.0;
+  mCurrentTorque = 0.0;
 
   // WREN
   mTransform = NULL;
@@ -173,7 +176,7 @@ void WbPropeller::updateDevice() {
 void WbPropeller::updateShaftAxis() {
   static const WbVector3 DEFAULT_AXIS(0.0, 1.0, 0.0);
   if (mShaftAxis->value().isNull()) {
-    warn(
+    parsingWarn(
       tr("'shaftAxis'cannot be zero. Defaults to %1 %2 %3").arg(DEFAULT_AXIS.x()).arg(DEFAULT_AXIS.y()).arg(DEFAULT_AXIS.z()));
     mShaftAxis->setValue(DEFAULT_AXIS);
   }
@@ -185,6 +188,9 @@ void WbPropeller::updateShaftAxis() {
 }
 
 void WbPropeller::prePhysicsStep(double ms) {
+  mCurrentThrust = 0.0;
+  mCurrentTorque = 0.0;
+
   WbRotationalMotor *const m = motor();
   if (m == NULL)
     return;
@@ -200,7 +206,7 @@ void WbPropeller::prePhysicsStep(double ms) {
     const WbSolidMerger *const sm = us->solidMerger();
     dBodyID b = sm ? sm->body() : NULL;
     if (b == NULL) {
-      warn(tr("Adds a Physics node to Solid ancestors to enable thrust and torque effect."));
+      parsingWarn(tr("Adds a Physics node to Solid ancestors to enable thrust and torque effect."));
       return;
     }
 
@@ -212,19 +218,19 @@ void WbPropeller::prePhysicsStep(double ms) {
     const double V = dCalcVectorDot3(vp, mNormalizedAxis.ptr());
 
     const WbVector2 &tcs = mTorqueConstants->value();
-    double torque = tcs.x() * velocity * absoluteVelocity - tcs.y() * absoluteVelocity * V;
+    mCurrentTorque = tcs.x() * velocity * absoluteVelocity - tcs.y() * absoluteVelocity * V;
     const double mt = m->maxForceOrTorque();
-    if (fabs(torque) > mt)
-      torque = torque > 0.0 ? mt : -mt;
+    if (fabs(mCurrentTorque) > mt)
+      mCurrentTorque = mCurrentTorque > 0.0 ? mt : -mt;
 
     const WbVector2 &fcs = mThrustConstants->value();
-    const double thrust = fcs.x() * velocity * absoluteVelocity - fcs.y() * absoluteVelocity * V;
+    mCurrentThrust = fcs.x() * velocity * absoluteVelocity - fcs.y() * absoluteVelocity * V;
 
     // Applies thrust and torque
     const WbMatrix3 &m3 = ut->rotationMatrix();
     const WbVector3 &axis = m3 * mNormalizedAxis;
-    const WbVector3 &thrustVector = thrust * axis;
-    const WbVector3 &torqueVector = -torque * axis;
+    const WbVector3 &thrustVector = mCurrentThrust * axis;
+    const WbVector3 &torqueVector = -mCurrentTorque * axis;
     if (sm && !sm->isBodyArtificiallyDisabled())
       dBodyEnable(b);
     dBodyAddForceAtPos(b, thrustVector.x(), thrustVector.y(), thrustVector.z(), cot.x(), cot.y(), cot.z());

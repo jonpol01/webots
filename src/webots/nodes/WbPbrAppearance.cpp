@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 #include "WbPbrAppearance.hpp"
 
 #include "WbBackground.hpp"
-#include "WbCubemap.hpp"
 #include "WbField.hpp"
 #include "WbFieldChecker.hpp"
 #include "WbImageTexture.hpp"
@@ -214,11 +213,6 @@ void WbPbrAppearance::createWrenObjects() {
     emissiveColorMap()->createWrenObjects();
 }
 
-void WbPbrAppearance::clearCubemap(WrMaterial *wrenMaterial) {
-  wr_material_set_texture_cubemap(wrenMaterial, NULL, 0);
-  wr_material_set_texture_cubemap(wrenMaterial, NULL, 1);
-}
-
 WrMaterial *WbPbrAppearance::modifyWrenMaterial(WrMaterial *wrenMaterial) {
   if (!wrenMaterial || wrenMaterial->type != WR_MATERIAL_PBR) {
     wr_material_delete(wrenMaterial);
@@ -241,21 +235,27 @@ WrMaterial *WbPbrAppearance::modifyWrenMaterial(WrMaterial *wrenMaterial) {
     metalnessMap()->modifyWrenMaterial(wrenMaterial, 2, 7);
 
   WbBackground *background = WbBackground::firstInstance();
+  float backgroundLuminosity = 1.0;
   if (background) {
-    WbCubemap *backgroundCubemap = background->cubemap();
-    if (backgroundCubemap) {
-      if (backgroundCubemap->isValid()) {
-        backgroundCubemap->modifyWrenMaterial(wrenMaterial);
-        connect(backgroundCubemap, &WbCubemap::cubeTexturesDestroyed, this, &WbPbrAppearance::updateCubeMap,
-                Qt::UniqueConnection);
-      } else
-        connect(backgroundCubemap, &WbCubemap::bakeCompleted, this, &WbPbrAppearance::updateCubeMap, Qt::UniqueConnection);
-    } else {
-      clearCubemap(wrenMaterial);
-      connect(background, &WbBackground::cubemapChanged, this, &WbPbrAppearance::updateCubeMap, Qt::UniqueConnection);
-    }
+    backgroundLuminosity = background->luminosity();
+    connect(background, &WbBackground::luminosityChanged, this, &WbPbrAppearance::updateCubeMap, Qt::UniqueConnection);
+
+    // irradiance map
+    WrTextureCubeMap *irradianceCubeTexture = background->irradianceCubeTexture();
+    if (irradianceCubeTexture) {
+      wr_material_set_texture_cubemap(wrenMaterial, irradianceCubeTexture, 0);
+      wr_material_set_texture_cubemap_wrap_r(wrenMaterial, WR_TEXTURE_WRAP_MODE_CLAMP_TO_EDGE, 0);
+      wr_material_set_texture_cubemap_wrap_s(wrenMaterial, WR_TEXTURE_WRAP_MODE_CLAMP_TO_EDGE, 0);
+      wr_material_set_texture_cubemap_wrap_t(wrenMaterial, WR_TEXTURE_WRAP_MODE_CLAMP_TO_EDGE, 0);
+      wr_material_set_texture_cubemap_anisotropy(wrenMaterial, 8, 0);
+      wr_material_set_texture_cubemap_enable_interpolation(wrenMaterial, true, 0);
+      wr_material_set_texture_cubemap_enable_mip_maps(wrenMaterial, true, 0);
+    } else
+      wr_material_set_texture_cubemap(wrenMaterial, NULL, 0);
+
+    connect(background, &WbBackground::cubemapChanged, this, &WbPbrAppearance::updateCubeMap, Qt::UniqueConnection);
   } else
-    clearCubemap(wrenMaterial);
+    wr_material_set_texture_cubemap(wrenMaterial, NULL, 0);
 
   if (normalMap())
     normalMap()->modifyWrenMaterial(wrenMaterial, 4, 7);
@@ -292,8 +292,9 @@ WrMaterial *WbPbrAppearance::modifyWrenMaterial(WrMaterial *wrenMaterial) {
 
   // set material properties
   wr_pbr_material_set_all_parameters(wrenMaterial, backgroundColor, baseColor, mTransparency->value(), mRoughness->value(),
-                                     mMetalness->value(), mIblStrength->value(), mNormalMapFactor->value(),
-                                     mOcclusionMapStrength->value(), emissiveColor, mEmissiveIntensity->value());
+                                     mMetalness->value(), backgroundLuminosity * mIblStrength->value(),
+                                     mNormalMapFactor->value(), mOcclusionMapStrength->value(), emissiveColor,
+                                     mEmissiveIntensity->value());
 
   return wrenMaterial;
 }
@@ -350,7 +351,7 @@ void WbPbrAppearance::pickColorInBaseColorTexture(WbRgb &pickedColor, const WbVe
   WbImageTexture *tex = baseColorMap();
   if (tex) {
     WbVector2 uvTransformed = transformUVCoordinate(uv);
-    tex->pickColor(pickedColor, uvTransformed);
+    tex->pickColor(uvTransformed, pickedColor);
   } else
     pickedColor.setValue(1.0, 1.0, 1.0);  // default value
 }
@@ -363,11 +364,11 @@ void WbPbrAppearance::pickOcclusionInTexture(double *occlusion, const WbVector2 
   *occlusion = getRedValueInTexture(occlusionMap(), uv);
 }
 
-double WbPbrAppearance::getRedValueInTexture(const WbImageTexture *texture, const WbVector2 &uv) const {
+double WbPbrAppearance::getRedValueInTexture(WbImageTexture *texture, const WbVector2 &uv) const {
   if (texture) {
     WbRgb pickedColor;
     WbVector2 uvTransformed = transformUVCoordinate(uv);
-    texture->pickColor(pickedColor, uvTransformed);
+    texture->pickColor(uvTransformed, pickedColor);
     return pickedColor.red();
   }
   return 0.0;  // default value
@@ -589,4 +590,10 @@ QStringList WbPbrAppearance::fieldsToSynchronizeWithX3D() const {
   fields << "baseColor"
          << "emissiveColor";
   return fields;
+}
+
+bool WbPbrAppearance::exportNodeHeader(WbVrmlWriter &writer) const {
+  if (writer.isUrdf())
+    return true;
+  return WbAbstractAppearance::exportNodeHeader(writer);
 }

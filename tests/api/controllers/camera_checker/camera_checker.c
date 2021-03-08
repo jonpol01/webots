@@ -76,21 +76,21 @@ int main(int argc, char **argv) {
     samples_positions[3][1] = height - height / 8;
 
     // brown
-    samples_expected_colors[0][0] = 123;
-    samples_expected_colors[0][1] = 71;
-    samples_expected_colors[0][2] = 58;
+    samples_expected_colors[0][0] = 122;
+    samples_expected_colors[0][1] = 75;
+    samples_expected_colors[0][2] = 65;
     // cyan
-    samples_expected_colors[1][0] = 156;
-    samples_expected_colors[1][1] = 205;
-    samples_expected_colors[1][2] = 195;
+    samples_expected_colors[1][0] = 153;
+    samples_expected_colors[1][1] = 200;
+    samples_expected_colors[1][2] = 191;
     // white
-    samples_expected_colors[2][0] = 207;
-    samples_expected_colors[2][1] = 207;
-    samples_expected_colors[2][2] = 207;
+    samples_expected_colors[2][0] = 202;
+    samples_expected_colors[2][1] = 202;
+    samples_expected_colors[2][2] = 202;
     // dark gray
-    samples_expected_colors[3][0] = 44;
-    samples_expected_colors[3][1] = 44;
-    samples_expected_colors[3][2] = 44;
+    samples_expected_colors[3][0] = 54;
+    samples_expected_colors[3][1] = 54;
+    samples_expected_colors[3][2] = 54;
 
     if (strcmp(argv[1], "camera_color_spherical") == 0) {
       samples_number = 6;
@@ -170,12 +170,12 @@ int main(int argc, char **argv) {
   } else if (strcmp(argv[1], "camera_color_motion_blur") == 0) {
     const unsigned char *image = wb_camera_get_image(camera);
     int red = wb_camera_image_get_red(image, width, 31, 31);
-    ts_assert_int_equal(red, 227, "Image should be red, received %d instead of 255 for the red component", red);
+    ts_assert_int_equal(red, 224, "Image should be red, received %d instead of 224 for the red component", red);
     int i;
     for (i = 0; i < 10; ++i)  // let the red box fall
       wb_robot_step(TIME_STEP);
     image = wb_camera_get_image(camera);
-    unsigned char red_gradient[] = {89, 118, 153, 192, 227};
+    unsigned char red_gradient[] = {87, 115, 150, 188, 224};
     for (i = 0; i < sizeof(red_gradient); ++i) {
       red = wb_camera_image_get_red(image, width, 31, 5 + i * 13);
       ts_assert_int_equal(red, red_gradient[i], "Pixel red level should be %d, but is %d", red_gradient[i], red);
@@ -212,6 +212,28 @@ int main(int argc, char **argv) {
                             "Lower part of the image should not be entirely red with focus");
     ts_assert_int_not_equal(wb_camera_image_get_blue(image, width, 31, 32), 0,
                             "Lower part of the image should contain some blue with focus");
+  } else if (strcmp(argv[1], "camera_color_exposure") == 0) {
+    unsigned char *image = (unsigned char *)wb_camera_get_image(camera);
+    ts_assert_double_equal(wb_camera_get_exposure(camera), 0.5, "Unexpected exposure value: %f",
+                           wb_camera_get_exposure(camera));
+    // half exposure => upper part should be entirely blue (background) and lower part half red
+    ts_assert_int_equal(wb_camera_image_get_red(image, width, 31, 30), 0, "Upper part of the image should not contain any red");
+    ts_assert_int_equal(wb_camera_image_get_blue(image, width, 31, 30), 255,
+                        "Upper part of the image should be entirely blue without focus");
+    ts_assert_int_equal(wb_camera_image_get_red(image, width, 31, 32), 190, "Lower part of the image should be dark red");
+    ts_assert_int_equal(wb_camera_image_get_blue(image, width, 31, 32), 0,
+                        "Lower part of the image should not contain any blue");
+
+    wb_camera_set_exposure(camera, 5);
+    wb_robot_step(TIME_STEP);
+    ts_assert_double_equal(wb_camera_get_exposure(camera), 5, "Unexpected exposure value: %f", wb_camera_get_exposure(camera));
+
+    image = (unsigned char *)wb_camera_get_image(camera);
+    ts_assert_int_equal(wb_camera_image_get_red(image, width, 31, 30), 0, "Upper part of the image should not contain any red");
+    ts_assert_int_equal(wb_camera_image_get_blue(image, width, 31, 30), 255, "Upper part of the image should be entirely blue");
+    ts_assert_int_equal(wb_camera_image_get_red(image, width, 31, 32), 255, "Lower part of the image should be red saturated");
+    ts_assert_int_equal(wb_camera_image_get_blue(image, width, 31, 32), 0,
+                        "Lower part of the image should not contain any blue");
   } else
     ts_send_error_and_exit("camera_checker doesn't support this world: %s", argv[1]);
 

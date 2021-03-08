@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include "WbWorld.hpp"
 
 #include <webots/receiver.h>  // for WB_CHANNEL_BROADCAST
-#include "../../lib/Controller/api/messages.h"
+#include "../../controller/c/messages.h"
 
 #include <QtCore/QDataStream>
 #include <cassert>
@@ -71,7 +71,7 @@ public:
   void recomputeRayDirection(const WbVector3 &receiverTranslation) {
     // compute ray direction and length
     WbEmitter *e = mPacket->emitter();
-    e->updateTransformAfterPhysicsStep();
+    e->updateTransformForPhysicsStep();
     const WbVector3 &te = e->matrix().translation();
     WbVector3 dir = receiverTranslation - te;
     dGeomRaySetLength(mGeom, dir.length());
@@ -163,7 +163,7 @@ void WbReceiver::postFinalize() {
 void WbReceiver::updateTransmissionSetup() {
   mMediumType = WbDataPacket::decodeMediumType(mType->value());
   if (mMediumType == WbDataPacket::UNKNOWN) {
-    warn(tr("Unknown 'type': \"%1\".").arg(mType->value()));
+    parsingWarn(tr("Unknown 'type': \"%1\".").arg(mType->value()));
     mMediumType = WbDataPacket::RADIO;
   }
 
@@ -179,7 +179,7 @@ void WbReceiver::updateTransmissionSetup() {
 
 void WbReceiver::writeConfigure(QDataStream &stream) {
   // TODO disable in remote or not ?
-  // mSensor->connectToRobotSignal(robot());
+  mSensor->connectToRobotSignal(robot(), false);
 
   stream << tag();
   stream << (unsigned char)C_CONFIGURE;
@@ -242,7 +242,7 @@ void WbReceiver::prePhysicsStep(double ms) {
 }
 
 void WbReceiver::updateRaysSetupIfNeeded() {
-  updateTransformAfterPhysicsStep();
+  updateTransformForPhysicsStep();
   const WbVector3 position = matrix().translation();
   // update receiver position in pending packets
   foreach (Transmission *t, mTransmissionList)

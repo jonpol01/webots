@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2019 Cyberbotics Ltd.
+ * Copyright 1996-2021 Cyberbotics Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ unsigned char *wbr_camera_get_image_buffer(WbDeviceTag tag);
 typedef struct WbrInterface {
   // mandatory functions :
   struct {
-    bool (*wbr_start)(void *);
+    bool (*wbr_start)(const char *);
     void (*wbr_stop)();
     bool (*wbr_has_failed)();
     void (*wbr_stop_actuators)();
@@ -84,6 +84,7 @@ typedef struct WbrInterface {
 
   void (*wbr_set_sampling_period)(WbDeviceTag tag, int sampling_period);
   void (*wbr_camera_set_fov)(WbDeviceTag tag, double fov);
+  void (*wbr_camera_set_exposure)(WbDeviceTag tag, double exposure);
   void (*wbr_camera_set_focal_distance)(WbDeviceTag tag, double focal_distance);
   void (*wbr_led_set)(WbDeviceTag tag, int state);
   void (*wbr_pen_set_ink_color)(WbDeviceTag tag, int color, double density);

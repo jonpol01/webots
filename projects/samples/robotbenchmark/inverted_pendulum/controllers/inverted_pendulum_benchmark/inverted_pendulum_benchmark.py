@@ -30,7 +30,7 @@ timestep = int(robot.getBasicTimeStep())
 jointParameters = robot.getFromDef("PENDULUM_PARAMETERS")
 positionField = jointParameters.getField("position")
 
-emitter = robot.getEmitter("emitter")
+emitter = robot.getDevice("emitter")
 time = 0
 force = 0
 forceStep = 800
@@ -62,7 +62,12 @@ while robot.step(timestep) != -1:
     else:
         # wait for record message
         message = robot.wwiReceiveText()
-        if message and message.startswith("record:"):
+        if message:
+            if message.startswith("record:"):
                 record = robotbenchmarkRecord(message, "inverted_pendulum", time)
                 robot.wwiSendText(record)
                 break
+            elif message == "exit":
+                break
+
+robot.simulationSetMode(Supervisor.SIMULATION_MODE_PAUSE)

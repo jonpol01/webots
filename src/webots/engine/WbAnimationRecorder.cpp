@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ WbAnimationCommand::WbAnimationCommand(const WbNode *n, const QStringList &field
                      .arg(ROUND(sfVector3->x(), 0.0001))
                      .arg(ROUND(sfVector3->y(), 0.0001))
                      .arg(ROUND(sfVector3->z(), 0.0001));
+          mLastTranslation =
+            WbVector3(ROUND(sfVector3->x(), 0.001), ROUND(sfVector3->y(), 0.001), ROUND(sfVector3->z(), 0.001));
         } else if (sfRotation && fieldName.compare("rotation") == 0) {
           // special rotation case
           state += QString("%1 %2 %3 %4")
@@ -62,6 +64,8 @@ WbAnimationCommand::WbAnimationCommand(const WbNode *n, const QStringList &field
                      .arg(ROUND(sfRotation->y(), 0.0001))
                      .arg(ROUND(sfRotation->z(), 0.0001))
                      .arg(ROUND(sfRotation->angle(), 0.0001));
+          mLastRotation = WbRotation(ROUND(sfRotation->x(), 0.001), ROUND(sfRotation->y(), 0.001),
+                                     ROUND(sfRotation->z(), 0.001), ROUND(sfRotation->angle(), 0.001));
         } else  // generic case
           state += field->value()->toString(WbPrecision::FLOAT_MAX);
         state += "\"";
@@ -381,12 +385,17 @@ void WbAnimationRecorder::start(const QString &fileName) {
 void WbAnimationRecorder::stopRecording() {
   disconnect(WbSimulationState::instance(), &WbSimulationState::physicsStepEnded, this, &WbAnimationRecorder::update);
   mIsRecording = false;
-
   if (!mFile)
     return;
-
-  // prepend header and initial state to the file containing updates
   mFile->close();
+  const WbWorld *const world = WbWorld::instance();
+  if (!world) {  // the world is being reverted, aborting the animation and deleting the incomplete animation file
+    mFile->remove();
+    delete mFile;
+    mFile = NULL;
+    return;
+  }
+  // prepend header and initial state to the file containing updates
   mFile->open(QFile::ReadOnly | QFile::Text);
   const QByteArray updates = mFile->readAll();
   mFile->close();
@@ -395,7 +404,7 @@ void WbAnimationRecorder::stopRecording() {
   QTextStream out(mFile);
   out << "{\n";
   // write header
-  const WbWorldInfo *const worldInfo = WbWorld::instance()->worldInfo();
+  const WbWorldInfo *const worldInfo = world->worldInfo();
   const double step = worldInfo->basicTimeStep() * ceil((1000.0 / worldInfo->fps()) / worldInfo->basicTimeStep());
   out << QString(" \"basicTimeStep\":%1,\n").arg(step);
   out << " \"ids\":\"";
@@ -405,6 +414,7 @@ void WbAnimationRecorder::stopRecording() {
     // store only ids of nodes that changed during the animation
     if (command->isChangedFromStart()) {
       commandsChangedFromStart << command;
+      // cppcheck-suppress knownConditionTrueFalse
       if (!firstCommand)
         out << ";";
       else
@@ -439,8 +449,11 @@ void WbAnimationRecorder::stopRecording() {
 
   if (mStartedFromGui && !mStreamingServer)
     emit requestOpenUrl(fileName,
-                        tr("The animation has been created:\n%1\n\nDo you want to view it locally now?\n\nNote: Animations can "
-                           "not be viewed locally on Google Chrome.")
+                        tr("The animation has been created:<br>%1<br><br>Do you want to view it locally now?<br><br>"
+                           "Note: please refer to the "
+                           "<a style='color: #5DADE2;' href='https://cyberbotics.com/doc/guide/"
+                           "web-scene#remarks-on-the-used-technologies-and-their-limitations'>User Guide</a> "
+                           "if your browser prevents local files CORS requests.")
                           .arg(fileName),
                         tr("Make HTML5 Animation"));
 

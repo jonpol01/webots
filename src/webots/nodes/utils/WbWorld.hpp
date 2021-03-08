@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ public:
   bool isCleaning() const { return mIsCleaning; }
   void setIsCleaning(bool cleaning) { mIsCleaning = cleaning; }
   bool wasWorldLoadingCanceled() { return mWorldLoadingCanceled; }
+
+  bool isVideoRecording() const { return mIsVideoRecording; }
 
   static QString defaultX3dFrustumCullingParameter() { return "true"; }
   static void enableX3DMetaFileExport() { cX3DMetaFileExport = true; }
@@ -139,16 +141,28 @@ public:
   void retrieveNodeNamesWithOptionalRendering(QStringList &centerOfMassNodeNames, QStringList &centerOfBuoyancyNodeNames,
                                               QStringList &supportPolygonNodeNames) const;
 
-  virtual void reset() {}
+  void setResetRequested(bool restartControllers) {
+    mResetRequested = true;
+    if (!mRestartControllers)
+      mRestartControllers = restartControllers;
+  }
+  virtual void reset(bool restartControllers) {
+    mResetRequested = false;
+    mRestartControllers = false;
+  }
 
 signals:
   void modificationChanged(bool modified);
   void worldLoadingStatusHasChanged(QString status);
   void viewpointChanged();
   void robotAdded(WbRobot *robot);
+  void resetRequested(bool restartControllers);
 
 public slots:
   void awake();
+  void updateVideoRecordingStatus(int status) {
+    mIsVideoRecording = (status == WB_SUPERVISOR_MOVIE_RECORDING || status == WB_SUPERVISOR_MOVIE_SAVING);
+  }
 
 protected:
   // collecting contact and immersion geometries
@@ -163,6 +177,8 @@ protected:
 
 protected:
   bool mWorldLoadingCanceled;
+  bool mResetRequested;
+  bool mRestartControllers;
 
 protected slots:
   virtual void storeAddedNodeIfNeeded(WbNode *node) {}
@@ -184,6 +200,7 @@ private:
   double mLastAwakeningTime;
   bool mIsLoading;
   bool mIsCleaning;
+  bool mIsVideoRecording;
 
   void checkPresenceOfMandatoryNodes();
   WbNode *findTopLevelNode(const QString &modelName, int preferredPosition) const;

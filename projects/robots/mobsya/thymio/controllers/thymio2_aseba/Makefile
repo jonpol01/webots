@@ -1,4 +1,4 @@
-# Copyright 1996-2019 Cyberbotics Ltd.
+# Copyright 1996-2021 Cyberbotics Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 # You may add some variable definitions hereafter to customize the build process
 # See documentation in $(WEBOTS_HOME_PATH)/resources/Makefile.include
 
-space :=
-space +=
+null :=
+space := $(null) $(null)
 WEBOTS_HOME_PATH=$(subst $(space),\ ,$(strip $(subst \,/,$(WEBOTS_HOME))))
 include $(WEBOTS_HOME_PATH)/resources/Makefile.os.include
 
@@ -27,16 +27,20 @@ DASHEL_HOME = $(WEBOTS_HOME)/projects/robots/mobsya/thymio/libraries/dashel/
 C_SOURCES = \
   thymio2_definitions.c \
   thymio2_natives.c \
-  aseba/transport/buffer/vm-buffer.c \
-  aseba/vm/natives.c \
-  aseba/vm/vm.c
+  aseba/aseba/transport/buffer/vm-buffer.c \
+  aseba/aseba/vm/natives.c \
+  aseba/aseba/vm/vm.c
 CXX_SOURCES = $(wildcard *.cpp)
 
 ifneq ($(OSTYPE),darwin)
 CFLAGS = -fno-strict-aliasing
 endif
 
-INCLUDE = -I"$(DASHEL_HOME)" -Iaseba
+ifeq ($(OSTYPE),windows)
+CFLAGS = -Wno-address -Wno-unused-function -DDISABLE_WEAK_CALLBACKS
+endif
+
+INCLUDE = -I"$(DASHEL_HOME)" -Iaseba/aseba
 LIBRARIES = -L"$(DASHEL_HOME)" -ldashel
 
 include $(WEBOTS_HOME_PATH)/resources/Makefile.include

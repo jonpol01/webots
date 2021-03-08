@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <wren/static_mesh.h>
 #include <wren/transform.h>
 
-#include "../../lib/Controller/api/messages.h"
+#include "../../controller/c/messages.h"
 
 #include <QtCore/QDataStream>
 #include <QtCore/QVector>
@@ -169,13 +169,13 @@ void WbRadar::updateMinRange() {
   if (mMaxRange->value() <= mMinRange->value()) {
     if (mMaxRange->value() == 0.0) {
       double newMaxRange = mMinRange->value() + 1.0;
-      warn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
+      parsingWarn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
       mMaxRange->setValueNoSignal(newMaxRange);
     } else {
       double newMinRange = mMaxRange->value() - 1.0;
       if (newMinRange < 0.0)
         newMinRange = 0.0;
-      warn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'minRange' to %1.").arg(newMinRange));
+      parsingWarn(tr("'minRange' is greater or equal to 'maxRange'. Setting 'minRange' to %1.").arg(newMinRange));
       mMinRange->setValueNoSignal(newMinRange);
     }
     return;
@@ -189,7 +189,7 @@ void WbRadar::updateMaxRange() {
 
   if (mMaxRange->value() <= mMinRange->value()) {
     double newMaxRange = mMinRange->value() + 1.0;
-    warn(tr("'maxRange' is less or equal to 'minRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
+    parsingWarn(tr("'maxRange' is less or equal to 'minRange'. Setting 'maxRange' to %1.").arg(newMaxRange));
     mMaxRange->setValueNoSignal(newMaxRange);
     return;
   }
@@ -220,7 +220,7 @@ void WbRadar::updateMinAndMaxRadialSpeed() {
 
   if (mMaxRadialSpeed->value() <= mMinRadialSpeed->value()) {
     double newMaxRadialSpeed = mMinRadialSpeed->value() + 1.0;
-    warn(
+    parsingWarn(
       tr("'maxRadialSpeed' is less than or equal to 'minRadialSpeed'. Setting 'maxRadialSpeed' to %1.").arg(newMaxRadialSpeed));
     mMaxRadialSpeed->setValueNoSignal(newMaxRadialSpeed);
     return;
@@ -302,7 +302,7 @@ void WbRadar::postPhysicsStep() {
 }
 
 void WbRadar::updateRaysSetupIfNeeded() {
-  updateTransformAfterPhysicsStep();
+  updateTransformForPhysicsStep();
 
   // compute the radar position, rotation, axis and plane
   const WbVector3 radarPosition = matrix().translation();
@@ -313,7 +313,7 @@ void WbRadar::updateRaysSetupIfNeeded() {
   WbAffinePlane *frustumPlanes = WbObjectDetection::computeFrustumPlanes(radarPosition, radarRotation, verticalFieldOfView(),
                                                                          horizontalFieldOfView(), maxRange());
   foreach (WbRadarTarget *target, mRadarTargets) {
-    target->object()->updateTransformAfterPhysicsStep();
+    target->object()->updateTransformForPhysicsStep();
     bool valid = target->recomputeRayDirection(this, radarPosition, radarRotation, radarInverseRotation, frustumPlanes);
     if (valid)
       valid =

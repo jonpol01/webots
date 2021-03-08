@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ WbPreferencesDialog::WbPreferencesDialog(QWidget *parent, const QString &default
   gStartupModes.clear();
   gStartupModes << "Pause"
                 << "Real-time"
-                << "Run"
                 << "Fast";
 
   mTabWidget = new QTabWidget(this);
@@ -83,15 +82,18 @@ WbPreferencesDialog::WbPreferencesDialog(QWidget *parent, const QString &default
   mEditorFontEdit->setText(prefs->value("Editor/font").toString());
   mNumberOfThreads = prefs->value("General/numberOfThreads", 1).toInt();
   mNumberOfThreadsCombo->setCurrentIndex(mNumberOfThreads - 1);
-  mPythonCommand->setText(prefs->value("General/pythonCommand").toString());
+  if (mPythonCommand)
+    mPythonCommand->setText(prefs->value("General/pythonCommand").toString());
   mExtraProjectsPath->setText(prefs->value("General/extraProjectsPath").toString());
   mTelemetryCheckBox->setChecked(prefs->value("General/telemetry").toBool());
   mCheckWebotsUpdateCheckBox->setChecked(prefs->value("General/checkWebotsUpdateOnStartup").toBool());
+  mRenderingCheckBox->setChecked(prefs->value("General/rendering").toBool());
   mDisableSaveWarningCheckBox->setChecked(prefs->value("General/disableSaveWarning").toBool());
 
   // openGL tab
   mAmbientOcclusionCombo->setCurrentIndex(prefs->value("OpenGL/GTAO", 2).toInt());
   mTextureQualityCombo->setCurrentIndex(prefs->value("OpenGL/textureQuality", 2).toInt());
+  mTextureFilteringCombo->setCurrentIndex(prefs->value("OpenGL/textureFiltering", 4).toInt());
 
   mDisableShadowsCheckBox->setChecked(prefs->value("OpenGL/disableShadows").toBool());
   mDisableAntiAliasingCheckBox->setChecked(prefs->value("OpenGL/disableAntiAliasing").toBool());
@@ -140,15 +142,18 @@ void WbPreferencesDialog::accept() {
   prefs->setValue("General/language", languageKey);
   prefs->setValue("General/theme", mValidThemeFilenames.at(mThemeCombo->currentIndex()));
   prefs->setValue("General/numberOfThreads", mNumberOfThreadsCombo->currentIndex() + 1);
-  prefs->setValue("General/pythonCommand", mPythonCommand->text());
+  if (mPythonCommand)
+    prefs->setValue("General/pythonCommand", mPythonCommand->text());
   prefs->setValue("General/extraProjectsPath", mExtraProjectsPath->text());
   prefs->setValue("General/telemetry", mTelemetryCheckBox->isChecked());
   prefs->setValue("General/checkWebotsUpdateOnStartup", mCheckWebotsUpdateCheckBox->isChecked());
+  prefs->setValue("General/rendering", mRenderingCheckBox->isChecked());
   prefs->setValue("General/disableSaveWarning", mDisableSaveWarningCheckBox->isChecked());
 
   // openGL
   prefs->setValue("OpenGL/GTAO", mAmbientOcclusionCombo->currentIndex());
   prefs->setValue("OpenGL/textureQuality", mTextureQualityCombo->currentIndex());
+  prefs->setValue("OpenGL/textureFiltering", mTextureFilteringCombo->currentIndex());
   prefs->setValue("OpenGL/disableShadows", mDisableShadowsCheckBox->isChecked());
   prefs->setValue("OpenGL/disableAntiAliasing", mDisableAntiAliasingCheckBox->isChecked());
 
@@ -244,7 +249,6 @@ QWidget *WbPreferencesDialog::createGeneralTab() {
   }
 
   mEditorFontEdit = new WbLineEdit(this);
-  mPythonCommand = new WbLineEdit(this);
   mExtraProjectsPath = new WbLineEdit(this);
   mExtraProjectsPath->setToolTip(
     tr("Extra projects may include PROTOs, controllers, plugins, etc. that you can use in your current project."));
@@ -267,47 +271,59 @@ QWidget *WbPreferencesDialog::createGeneralTab() {
   connect(chooseFontButton, &QPushButton::pressed, this, &WbPreferencesDialog::openFontDialog);
 
   // row 3
-  layout->addWidget(new QLabel(tr("Editor font:"), this), 3, 0);
-  layout->addWidget(mEditorFontEdit, 3, 1);
-  layout->addWidget(chooseFontButton, 3, 2);
+  mRenderingCheckBox = new QCheckBox(tr("Rendering"), this);
+  layout->addWidget(mRenderingCheckBox, 3, 1);
 
   // row 4
-  layout->addWidget(new QLabel(tr("Number of threads:"), this), 4, 0);
-  layout->addWidget(mNumberOfThreadsCombo, 4, 1);
+  layout->addWidget(new QLabel(tr("Editor font:"), this), 4, 0);
+  layout->addWidget(mEditorFontEdit, 4, 1);
+  layout->addWidget(chooseFontButton, 4, 2);
 
   // row 5
-  layout->addWidget(new QLabel(tr("Python command:"), this), 5, 0);
-  layout->addWidget(mPythonCommand, 5, 1);
+  layout->addWidget(new QLabel(tr("Number of threads:"), this), 5, 0);
+  layout->addWidget(mNumberOfThreadsCombo, 5, 1);
 
   // row 6
-  layout->addWidget(new QLabel(tr("Extra projects path:"), this), 6, 0);
-  layout->addWidget(mExtraProjectsPath, 6, 1);
-
+  layout->addWidget(new QLabel(tr("Python command:"), this), 6, 0);
+  if (WbSysInfo::isSnap()) {
+    QLabel *label = new QLabel(
+      tr("built-in python (snap), see <a href=\"https://cyberbotics.com/doc/guide/running-extern-robot-controllers\">extern "
+         "controllers</a> for alternatives."),
+      this);
+    layout->addWidget(label, 6, 1);
+    connect(label, &QLabel::linkActivated, &WbDesktopServices::openUrl);
+    mPythonCommand = NULL;
+  } else
+    layout->addWidget(mPythonCommand = new WbLineEdit(this), 6, 1);
   // row 7
+  layout->addWidget(new QLabel(tr("Extra projects path:"), this), 7, 0);
+  layout->addWidget(mExtraProjectsPath, 7, 1);
+
+  // row 8
   mDisableSaveWarningCheckBox = new QCheckBox(tr("Display save warning only for scene tree edit"), this);
   mDisableSaveWarningCheckBox->setToolTip(
     tr("If this option is enabled, Webots will not display any warning when you quit, reload\nor load a new world after the "
        "current world was modified by either changing the viewpoint,\ndragging, rotating, applying a force or applying a "
        "torque to an object. It will however\nstill display a warning if the world was modified from the scene tree."));
-  layout->addWidget(new QLabel(tr("Warnings:"), this), 7, 0);
-  layout->addWidget(mDisableSaveWarningCheckBox, 7, 1);
-
-  // row 8
-  mTelemetryCheckBox = new QCheckBox(tr("Send technical data to Webots developers"), this);
-  mTelemetryCheckBox->setToolTip(tr("We need your help to continue to improve Webots: more information at:\n"
-                                    "https://www.cyberbotics.com/doc/guide/telemetry"));
-  QLabel *label = new QLabel(
-    tr("Telemetry (<a style='color: #5DADE2;' href='https://www.cyberbotics.com/doc/guide/telemetry'>info</a>):"), this);
-  connect(label, &QLabel::linkActivated, &WbDesktopServices::openUrl);
-  layout->addWidget(label, 8, 0);
-  layout->addWidget(mTelemetryCheckBox, 8, 1);
+  layout->addWidget(new QLabel(tr("Warnings:"), this), 8, 0);
+  layout->addWidget(mDisableSaveWarningCheckBox, 8, 1);
 
   // row 9
+  mTelemetryCheckBox = new QCheckBox(tr("Send technical data to Webots developers"), this);
+  mTelemetryCheckBox->setToolTip(tr("We need your help to continue to improve Webots: more information at:\n"
+                                    "https://cyberbotics.com/doc/guide/telemetry"));
+  QLabel *label =
+    new QLabel(tr("Telemetry (<a style='color: #5DADE2;' href='https://cyberbotics.com/doc/guide/telemetry'>info</a>):"), this);
+  connect(label, &QLabel::linkActivated, &WbDesktopServices::openUrl);
+  layout->addWidget(label, 9, 0);
+  layout->addWidget(mTelemetryCheckBox, 9, 1);
+
+  // row 10
   mCheckWebotsUpdateCheckBox = new QCheckBox(tr("Check for Webots updates on startup"), this);
   mCheckWebotsUpdateCheckBox->setToolTip(tr("If this option is enabled, Webots will check if a new version is available for "
                                             "download\nat every startup. If available, it will inform you about it."));
-  layout->addWidget(new QLabel(tr("Update policy:"), this), 9, 0);
-  layout->addWidget(mCheckWebotsUpdateCheckBox, 9, 1);
+  layout->addWidget(new QLabel(tr("Update policy:"), this), 10, 0);
+  layout->addWidget(mCheckWebotsUpdateCheckBox, 10, 1);
 
   setTabOrder(mStartupModeCombo, mEditorFontEdit);
   setTabOrder(mEditorFontEdit, chooseFontButton);
@@ -338,13 +354,20 @@ QWidget *WbPreferencesDialog::createOpenGLTab() {
   layout->addWidget(mTextureQualityCombo, 1, 1, Qt::AlignLeft);
 
   // row 2
-  layout->addWidget(new QLabel(tr("Options:"), this), 2, 0);
-  mDisableShadowsCheckBox = new QCheckBox(tr("Disable shadows"), this);
-  layout->addWidget(mDisableShadowsCheckBox, 2, 1, Qt::AlignLeft);
+  mTextureFilteringCombo = new QComboBox(this);
+  for (int i = 0; i < 6; ++i)
+    mTextureFilteringCombo->addItem(QString::number(i));
+  layout->addWidget(new QLabel(tr("Max Texture Filtering:"), this), 2, 0);
+  layout->addWidget(mTextureFilteringCombo, 2, 1, Qt::AlignLeft);
 
   // row 3
+  layout->addWidget(new QLabel(tr("Options:"), this), 3, 0);
+  mDisableShadowsCheckBox = new QCheckBox(tr("Disable shadows"), this);
+  layout->addWidget(mDisableShadowsCheckBox, 3, 1, Qt::AlignLeft);
+
+  // row 4
   mDisableAntiAliasingCheckBox = new QCheckBox(tr("Disable anti-aliasing"), this);
-  layout->addWidget(mDisableAntiAliasingCheckBox, 3, 1, Qt::AlignLeft);
+  layout->addWidget(mDisableAntiAliasingCheckBox, 4, 1, Qt::AlignLeft);
 
   return widget;
 }

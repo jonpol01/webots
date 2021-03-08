@@ -4,6 +4,7 @@
 # Build directories
 build
 com
+webots_catkin_ws
 
 # Compiled source
 *.exe
@@ -53,12 +54,15 @@ Thumbs.db
 *.blend1
 
 # Webots generated files
-*.signature
 *.cache
+
+# IDE files
+.vscode
 
 # Local rules #
 ###############
 
+/.clang-format
 /msys64
 /webots
 /webots.lnk

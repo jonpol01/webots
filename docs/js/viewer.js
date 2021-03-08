@@ -1,5 +1,6 @@
 /* eslint no-extend-native: ["error", { "exceptions": ["String"] }] */
 /* global getGETQueryValue */
+/* global getGETQueriesMatchingRegularExpression */
 /* global setup */
 /* global showdown */
 /* global hljs */
@@ -38,7 +39,8 @@ function setupCyberboticsUrl(url) {
   localSetup.book = 'guide';
   localSetup.page = 'index';
   localSetup.anchor = '';
-  localSetup.tab = '';
+  if (!localSetup.tabs)
+    localSetup.tabs = {};
 
   var m = url.match(new RegExp('/([^/]+)/([^/\\?#]+)([^/]*)$'));
   if (m) {
@@ -56,11 +58,10 @@ function setupCyberboticsUrl(url) {
         localSetup.branch = version.substr(n + 1);
     }
 
-    m = url.match(/tab=([^&#]*)/);
-    if (m)
-      localSetup.tab = m[1];
-    else
-      localSetup.tab = '';
+    // Extract tab options
+    var tabRegex = /[?&](tab-[^=]+)=([^&#]+)/g;
+    while ((m = tabRegex.exec(url)) !== null)
+      localSetup.tabs[m[1]] = m[2];
 
     m = args.match(/#([^&#]*)/);
     if (m)
@@ -85,11 +86,12 @@ function setupDefaultUrl(url) {
   else if (!localSetup.book)
     localSetup.book = 'guide';
 
-  m = url.match(/tab=([^&#]*)/);
-  if (m)
-    localSetup.tab = m[1].toLowerCase();
-  else if (!localSetup.tab)
-    localSetup.tab = '';
+  // Extract tab options
+  if (!localSetup.tabs)
+    localSetup.tabs = {};
+  var tabRegex = /[?&](tab-[^=]+)=([^&#]+)/g;
+  while ((m = tabRegex.exec(url)) !== null)
+    localSetup.tabs[m[1]] = m[2];
 
   m = url.match(/#([^&#]*)/);
   if (m)
@@ -103,11 +105,21 @@ function setupUrl(url) {
     setupCyberboticsUrl(url);
   else
     setupDefaultUrl(url);
-  console.log('book=' + localSetup.book + ' page=' + localSetup.page + ' branch=' + localSetup.branch + ' tab=' + localSetup.tab + ' anchor=' + localSetup.anchor);
+
+  var tabsQuery = '';
+  for (var option in localSetup.tabs) {
+    if (!localSetup.tabs[option])
+      continue;
+    if (tabsQuery)
+      tabsQuery += ',';
+    tabsQuery += option + '=' + localSetup.tabs[option];
+  }
+  tabsQuery = '[' + tabsQuery + ']';
+  console.log('book=' + localSetup.book + ' page=' + localSetup.page + ' branch=' + localSetup.branch + ' tabs=' + tabsQuery + ' anchor=' + localSetup.anchor);
 }
 
 function computeTargetPath() {
-  var branch = 'master';
+  var branch = 'released';
   var targetPath = '';
   if (localSetup.branch)
     branch = localSetup.branch;
@@ -139,7 +151,7 @@ function redirectUrls(node) {
           anchor = match[3];
           if (anchor)
             anchor = anchor.substring(1); // remove the '#' character
-          a.setAttribute('href', forgeUrl(book, newPage, localSetup.tab, anchor));
+          a.setAttribute('href', forgeUrl(book, newPage, localSetup.tabs, anchor));
         }
       } else { // Cross-page hyperlink case.
         addDynamicLoadEvent(a);
@@ -149,7 +161,7 @@ function redirectUrls(node) {
           anchor = match[2];
           if (anchor)
             anchor = anchor.substring(1); // remove the '#' character
-          a.setAttribute('href', forgeUrl(localSetup.book, newPage, localSetup.tab, anchor));
+          a.setAttribute('href', forgeUrl(localSetup.book, newPage, localSetup.tabs, anchor));
         }
       }
     }
@@ -173,7 +185,9 @@ function collapseMovies(node) {
   }
 }
 
-function forgeUrl(book, page, tab, anchor) {
+function forgeUrl(book, page, tabs, anchor) {
+  var tabOption;
+  var isFirstArgument;
   var anchorString = (anchor && anchor.length > 0) ? ('#' + anchor) : '';
   var url = location.href;
   if (isCyberboticsUrl) {
@@ -183,37 +197,42 @@ function forgeUrl(book, page, tab, anchor) {
       url += '?version=' + localSetup.repository + ':' + localSetup.branch;
     else if (localSetup.branch !== '')
       url += '?version=' + localSetup.branch;
-    if (localSetup.tab !== '' && localSetup.branch === '')
-      url += '?tab=' + localSetup.tab;
-    else if (localSetup.tab !== '')
-      url += '&tab=' + localSetup.tab;
+    isFirstArgument = localSetup.branch === '';
+    for (tabOption in tabs) {
+      if (!tabs[tabOption])
+        continue;
+      url += (isFirstArgument ? '?' : '&') + tabOption + '=' + tabs[tabOption];
+      isFirstArgument = false;
+    }
     url += anchorString;
   } else {
-    var isFirstArgument;
+    isFirstArgument = (url.indexOf('?') < 0);
+
+    // Remove anchor from url
+    url = url.split('#')[0];
 
     // Add or replace the book argument.
     if (url.indexOf('book=') > -1)
       url = url.replace(/book=([^&]+)?/, 'book=' + book);
-    else {
-      isFirstArgument = (url.indexOf('?') < 0);
-      url = url + (isFirstArgument ? '?' : '&') + 'book=' + book;
-    }
+    else
+      url += (isFirstArgument ? '?' : '&') + 'book=' + book;
 
     // Add or replace the page argument.
     if (url.indexOf('page=') > -1)
       url = url.replace(/page=([\w-]+)?/, 'page=' + page);
-    else {
-      isFirstArgument = (url.indexOf('?') < 0);
-      url = url + (isFirstArgument ? '?' : '&') + 'page=' + page;
-    }
+    else
+      url += '&page=' + page;
 
     // Add or replace the tab argument.
-    if (url.indexOf('tab=') > -1)
-      url = url.replace(/tab=([^&]+)(#[\w-]+)?/, 'tab=' + tab + anchorString);
-    else {
-      isFirstArgument = (url.indexOf('?') < 0);
-      url = url + (tab !== '' ? (isFirstArgument ? '?' : '&') + 'tab=' + tab : '') + anchorString;
+    for (tabOption in tabs) {
+      let tabName = tabs[tabOption] ? tabs[tabOption] : '';
+      if (url.indexOf(tabOption + '=') > -1)
+        url = url.replace(new RegExp(tabOption + '=([^&]+)(#[\\w-]+)?'), tabOption + '=' + tabName);
+      else if (tabName)
+        url += '&' + tabOption + '=' + tabName;
     }
+
+    url += anchorString;
   }
   return url;
 }
@@ -223,6 +242,8 @@ function addDynamicAnchorEvent(el) {
     return;
   el.addEventListener('click',
     function(event) {
+      if (event.ctrlKey)
+        return;
       var node = event.target;
       while (node && !node.hasAttribute('href'))
         node = node.getParent();
@@ -242,6 +263,8 @@ function addDynamicLoadEvent(el) {
     return;
   el.addEventListener('click',
     function(event) {
+      if (event.ctrlKey)
+        return;
       aClick(event.target);
       event.preventDefault();
     },
@@ -398,6 +421,8 @@ function applyToTitleDiv() {
       newTitle = 'Webots Reference Manual';
     else if (localSetup.book === 'blog')
       newTitle = 'Webots Blog';
+    else if (localSetup.book === 'discord')
+      newTitle = 'Webots Discord Archives';
     else if (localSetup.book === 'automobile')
       newTitle = 'Webots for automobiles';
     else
@@ -416,7 +441,7 @@ function addContributionBanner() {
   // append contribution sticker to primary doc element
   document.querySelector('#center').innerHTML += '<div style="top:' + displacement + '" class="contribution-banner">' +
                                                  'Found an error?' +
-                                                 '<a target="_blank" class="contribution-banner-url" href="https://github.com/cyberbotics/webots/tree/master/docs"> ' +
+                                                 '<a target="_blank" class="contribution-banner-url" href="https://github.com/cyberbotics/webots/tree/released/docs"> ' +
                                                  'Contribute on GitHub!' +
                                                  '<span class=github-logo />' +
                                                  '</a>' +
@@ -434,7 +459,7 @@ function addContributionBanner() {
 function updateContributionBannerUrl() {
   var contributionBanner = document.querySelector('.contribution-banner-url');
   if (contributionBanner)
-    contributionBanner.href = 'https://github.com/cyberbotics/webots/edit/master/docs/' + localSetup.book + '/' + localSetup.page + '.md';
+    contributionBanner.href = 'https://github.com/cyberbotics/webots/edit/released/docs/' + localSetup.book + '/' + localSetup.page + '.md';
 }
 
 function addNavigationToBlogIfNeeded() {
@@ -504,7 +529,7 @@ function createIndex(view) {
 
   // Do not create too small indexes.
   var content = document.querySelector('#content');
-  if (content.offsetHeight < 2 * window.innerHeight || headings.length < 4)
+  if ((content.offsetHeight < 2 * window.innerHeight || headings.length < 4) && (localSetup.book !== 'discord' || headings.length < 2))
     return;
 
   var level = parseInt(headings[0].tagName[1]) + 1; // current heading level.
@@ -623,7 +648,7 @@ function populateViewDiv(mdContent) {
 
 // replace the browser URL after a dynamic load
 function updateBrowserUrl() {
-  var url = forgeUrl(localSetup.book, localSetup.page, localSetup.tab, localSetup.anchor);
+  var url = forgeUrl(localSetup.book, localSetup.page, localSetup.tabs, localSetup.anchor);
   if (history.pushState) {
     try {
       history.pushState({state: 'new'}, null, url);
@@ -744,12 +769,17 @@ function sliderMotorCallback(transform, slider) {
   if (typeof transform === 'undefined')
     return;
 
+  if (typeof transform.firstRotation === 'undefined' && typeof transform.quaternion !== 'undefined')
+    transform.firstRotation = transform.quaternion.clone();
+
+  if (typeof transform.firstPosition === 'undefined' && typeof transform.position !== 'undefined')
+    transform.firstPosition = transform.position.clone();
+
   var axis = slider.getAttribute('webots-axis').split(/[\s,]+/);
   axis = new THREE.Vector3(parseFloat(axis[0]), parseFloat(axis[1]), parseFloat(axis[2]));
 
   var value = parseFloat(slider.value);
   var position = parseFloat(slider.getAttribute('webots-position'));
-  var initialPosition = parseFloat(slider.getAttribute('webots-initial-position'));
 
   if (slider.getAttribute('webots-type') === 'LinearMotor') {
     // Compute translation
@@ -765,15 +795,30 @@ function sliderMotorCallback(transform, slider) {
     transform.position.copy(translation);
     transform.updateMatrix();
   } else {
+    // extract anchor
+    var anchor = slider.getAttribute('webots-anchor').split(/[\s,]+/);
+    anchor = new THREE.Vector3(parseFloat(anchor[0]), parseFloat(anchor[1]), parseFloat(anchor[2]));
+
     // Compute angle.
-    var angle = initialPosition;
-    angle += value - position;
+    var angle = value - position;
+
     // Apply the new axis-angle.
     var q = new THREE.Quaternion();
     q.setFromAxisAngle(
       axis,
       angle
     );
+
+    if (typeof transform.firstRotation !== 'undefined')
+      q.multiply(transform.firstRotation);
+
+    if (typeof transform.firstPosition !== 'undefined')
+      transform.position.copy(transform.firstPosition);
+
+    transform.position.sub(anchor); // remove the offset
+    transform.position.applyAxisAngle(axis, angle); // rotate the POSITION
+    transform.position.add(anchor); // re-add the offset
+
     transform.quaternion.copy(q);
     transform.updateMatrix();
   }
@@ -808,7 +853,19 @@ function highlightX3DElement(robot, deviceElement) {
   if (object) {
     // Show billboard origin.
     var originBillboard = robotComponent.billboardOriginMesh.clone();
-    object.add(originBillboard);
+    if (deviceElement.hasAttribute('device-anchor')) {
+      var anchor = deviceElement.getAttribute('device-anchor').split(/[\s,]+/);
+      anchor = new THREE.Vector3(parseFloat(anchor[0]), parseFloat(anchor[1]), parseFloat(anchor[2]));
+      originBillboard.position.add(anchor);
+      object.parent.add(originBillboard);
+    } else {
+      if (deviceElement.hasAttribute('webots-transform-offset')) {
+        var offset = deviceElement.getAttribute('webots-transform-offset').split(/[\s,]+/);
+        offset = new THREE.Vector3(parseFloat(offset[0]), parseFloat(offset[1]), parseFloat(offset[2]));
+        originBillboard.position.add(offset);
+      }
+      object.add(originBillboard);
+    }
     robotComponent.billboardOrigin = originBillboard;
 
     if (type === 'LED') {
@@ -967,9 +1024,9 @@ function createRobotComponent(view) {
             }
             slider.setAttribute('value', device['position']);
             slider.setAttribute('webots-position', device['position']);
-            slider.setAttribute('webots-initial-position', device['initialPosition']);
             slider.setAttribute('webots-transform-id', device['transformID']);
             slider.setAttribute('webots-axis', device['axis']);
+            slider.setAttribute('webots-anchor', device['anchor']);
             slider.setAttribute('webots-type', deviceType);
             slider.addEventListener(isInternetExplorer() ? 'change' : 'input', function(e) {
               var id = e.target.getAttribute('webots-transform-id');
@@ -983,6 +1040,7 @@ function createRobotComponent(view) {
             motorDiv.appendChild(slider);
             motorDiv.appendChild(maxLabel);
             deviceDiv.appendChild(motorDiv);
+            deviceDiv.setAttribute('device-anchor', device['anchor']);
           }
 
           // LED case: set the target color.
@@ -1005,22 +1063,24 @@ function createRobotComponent(view) {
 }
 
 // Open a tab component tab
-function openTabFromEvent(evt, name) {
+function openTabFromEvent(evt, option, name) {
   // update links
   var a = document.querySelectorAll('a');
   for (var i = 0; i < a.length; i++) {
     var href = a[i].getAttribute('href');
     if (!href)
       continue;
-    if (href.includes('tab=' + localSetup.tab))
-      a[i].setAttribute('href', href.replace('tab=' + localSetup.tab, 'tab=' + name.toLowerCase()));
-    else if (!href.startsWith('#'))
-      a[i].setAttribute('href', href + (href.indexOf('?') > -1 ? '&' : '?') + 'tab=' + name.toLowerCase());
+    if (localSetup.tabs[option]) {
+      if (href.includes(option + '=' + localSetup.tabs[option]))
+        a[i].setAttribute('href', href.replace(option + '=' + localSetup.tabs[option], option + '=' + name.toLowerCase()));
+      else if (!href.startsWith('#'))
+        a[i].setAttribute('href', href + (href.indexOf('?') > -1 ? '&' : '?') + option + '=' + name.toLowerCase());
+    }
   }
   // open tab
-  localSetup.tab = name.toLowerCase();
+  localSetup.tabs[option] = name.toLowerCase();
   updateBrowserUrl();
-  openTab(evt.target.parentNode, localSetup.tab);
+  openTab(evt.target.parentNode, localSetup.tabs[option]);
 }
 
 // Open a tab component tab
@@ -1029,7 +1089,7 @@ function openTab(tabcomponent, name) {
 
   var tabcontent = tabcomponent.parentNode.querySelectorAll('.tab-content[tabid="' + tabID + '"][name="' + name + '"]')[0];
   if (typeof tabcontent === 'undefined')
-    return;
+    return false;
 
   var tabcontents = tabcomponent.parentNode.querySelectorAll('.tab-content[tabid="' + tabID + '"]');
   for (var i = 0; i < tabcontents.length; i++)
@@ -1044,12 +1104,17 @@ function openTab(tabcomponent, name) {
 
   var tablink = tabcomponent.querySelectorAll('.tab-links[name="' + name + '"]')[0];
   tablink.classList.add('active');
+  return true;
 }
 
 function applyTabs() {
   var tabComponents = document.querySelectorAll('.tab-component');
-  for (var k = 0; k < tabComponents.length; k++)
-    openTab(tabComponents[k], localSetup.tab);
+  for (var k = 0; k < tabComponents.length; k++) {
+    for (var tabName in localSetup.tabs) {
+      if (openTab(tabComponents[k], localSetup.tabs[tabName]))
+        break;
+    }
+  }
 }
 
 function renderGraphs() {
@@ -1066,7 +1131,7 @@ function renderGraphs() {
 
 function applyAnchorIcons(view) {
   var elements = [];
-  var tags = ['figcaption', 'h1', 'h2', 'h3', 'h4'];
+  var tags = ['figcaption', 'h1', 'h2', 'h3', 'h4', 'h5'];
   var i;
   for (i = 0; i < tags.length; i++) {
     var array = Array.prototype.slice.call(view.querySelectorAll(tags[i]));
@@ -1126,10 +1191,11 @@ function updateMenuScrollbar() {
   var e = document.documentElement;
   var t = document.documentElement.scrollTop || document.body.scrollTop;
   var p = e.scrollHeight - t - e.clientHeight;
-  if (p < 244) // 244 is the height in pixels of the footer of Cyberbotics web page
-    document.querySelector('#left').style.height = (e.clientHeight - 290 + p) + 'px';
-  else // 44 is the height in pixels of the header of Cyberbotics web page (44 + 244 = 290)
-    document.querySelector('#left').style.height = 'calc(100% - 44px)';
+  var footerHeight = 192;
+  if (p < footerHeight)
+    document.querySelector('#left').style.height = (e.clientHeight - footerHeight + p) + 'px';
+  else
+    document.querySelector('#left').style.height = '100%';
 }
 
 function updateSelection() {
@@ -1354,6 +1420,7 @@ function extractAnchor(url) {
 // width: in pixels
 function setHandleWidth(width) {
   handle.left.css('width', width + 'px');
+  handle.menu.css('width', width + 'px');
   handle.handle.css('left', width + 'px');
   handle.center.css('left', width + 'px');
   handle.center.css('width', 'calc(100% - ' + width + 'px)');
@@ -1364,17 +1431,15 @@ function initializeHandle() {
   handle = {}; // structure where all the handle info is stored
 
   handle.left = $('#left');
+  handle.menu = $('#menu');
   handle.center = $('#center');
   handle.handle = $('#handle');
   handle.container = $('#webots-doc');
 
   // dimension bounds of the handle in pixels
   handle.min = 0;
-  handle.minThreshold = 75; // under this threshold, the handle is totally hidden
-  if (localSetup.menuWidth && localSetup.menuWidth !== '')
-    handle.initialWidth = localSetup.menuWidth;
-  else
-    handle.initialWidth = handle.left.width();
+  handle.minThreshold = 90; // under this threshold, the handle is totally hidden
+  handle.initialWidth = Math.max(handle.minThreshold, handle.left.width());
   handle.max = Math.max(250, handle.initialWidth);
 
   handle.isResizing = false;
@@ -1392,7 +1457,9 @@ function initializeHandle() {
 
   setHandleWidth(handle.initialWidth);
 
-  handle.handle.on('mousedown', function(e) {
+  handle.handle.on('mousedown touchstart', function(e) {
+    if (e.type === 'touchstart')
+      e = e.originalEvent.touches[0];
     handle.isResizing = true;
     handle.lastDownX = e.clientX;
     handle.container.css('user-select', 'none');
@@ -1403,7 +1470,9 @@ function initializeHandle() {
       setHandleWidth(0);
   });
 
-  $(document).on('mousemove', function(e) {
+  $(document).on('mousemove touchmove', function(e) {
+    if (e.type === 'touchmove')
+      e = e.originalEvent.touches[0];
     if (!handle.isResizing)
       return;
     var mousePosition = e.clientX - handle.container.offset().left; // in pixels
@@ -1415,7 +1484,7 @@ function initializeHandle() {
     if (mousePosition < handle.min || mousePosition > handle.max)
       return;
     setHandleWidth(mousePosition);
-  }).on('mouseup', function(e) {
+  }).on('mouseup touchend', function(e) {
     handle.isResizing = false;
     handle.container.css('user-select', 'auto');
   });
@@ -1441,9 +1510,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!localSetup.anchor)
       localSetup.anchor = window.location.hash.substring(1);
     if (!localSetup.branch)
-      localSetup.branch = getGETQueryValue('branch', 'master');
-    if (!localSetup.tab)
-      localSetup.tab = getGETQueryValue('tab', '').toLowerCase();
+      localSetup.branch = getGETQueryValue('branch', 'released');
+    if (!localSetup.tabs)
+      localSetup.tabs = getGETQueriesMatchingRegularExpression('^tab-\\w+$', 'g');
+    // backward compatibility <= R2019b revision 1
+    if (!localSetup.tabs['tab-language']) {
+      if (localSetup.tab) {
+        localSetup.tabs['tab-language'] = localSetup.tab;
+        delete localSetup.tab;
+      } else
+        localSetup.tabs['tab-language'] = getGETQueryValue('tab', '').toLowerCase();
+    }
   }
 
   // prevent FOUC for blog

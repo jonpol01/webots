@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@
 #include "WbWrenGtao.hpp"
 #include "WbWrenHdr.hpp"
 #include "WbWrenRenderingContext.hpp"
+#include "WbWrenShaders.hpp"
 #include "WbWrenSmaa.hpp"
 
 #ifdef _WIN32
@@ -49,6 +50,7 @@
 #include <wren/camera.h>
 #include <wren/node.h>
 #include <wren/scene.h>
+#include <wren/shader_program.h>
 #include <wren/transform.h>
 #include <wren/viewport.h>
 
@@ -77,7 +79,6 @@ void WbViewpoint::init() {
   mFollowChangedBySelection = false;
   mFollowEmptiedByDestroyedSolid = false;
   mFollowChangedBySolidName = false;
-  mFollowEmptiedByUncheck = false;
   mNeedToUpdateFollowSolidState = false;
   mCoordinateSystem = NULL;
   mVirtualRealityHeadset = NULL;
@@ -96,7 +97,7 @@ void WbViewpoint::init() {
   mFinalOrbitQuaternion = WbQuaternion();
   mLookAtInitialQuaternion = WbQuaternion();
   mLookAtFinalQuaternion = WbQuaternion();
-  mGravitySpaceQuaternion = WbQuaternion();
+  mSpaceQuaternion = WbQuaternion();
   mWrenCamera = NULL;
 
   mFieldOfView = findSFDouble("fieldOfView");
@@ -107,7 +108,7 @@ void WbViewpoint::init() {
   mFar = findSFDouble("far");
   mExposure = findSFDouble("exposure");
   mFollow = findSFString("follow");
-  mFollowOrientation = findSFBool("followOrientation");
+  mFollowType = findSFString("followType");
   mFollowSmoothness = findSFDouble("followSmoothness");
   mLensFlare = findSFNode("lensFlare");
   mAmbientOcclusionRadius = findSFDouble("ambientOcclusionRadius");
@@ -123,6 +124,16 @@ void WbViewpoint::init() {
   mInverseViewMatrix = NULL;
 
   mNodeVisibilityEnabled = false;
+
+  // backward compatibility
+  WbSFBool *followOrientation = findSFBool("followOrientation");
+  if (followOrientation->value()) {
+    parsingWarn("Deprecated 'followOrientation' field, please use the 'followType' field instead.");
+    if (mFollowType->value() == "Tracking Shot") {
+      mFollowType->setValue("Mounted Shot");
+      followOrientation->setValue(false);
+    }
+  }
 
 #ifdef _WIN32
   if (WbPreferences::instance()->value("VirtualRealityHeadset/enable").toBool()) {
@@ -181,8 +192,8 @@ void WbViewpoint::postFinalize() {
   connect(mFar, &WbSFDouble::changed, this, &WbViewpoint::updateFar);
   connect(mExposure, &WbSFDouble::changed, this, &WbViewpoint::updateExposure);
   connect(mFollow, &WbSFString::changed, this, &WbViewpoint::updateFollow);
-  connect(mFollowOrientation, &WbSFBool::changed, this, &WbViewpoint::updateFollowSolidState);
-  connect(mFollowOrientation, &WbSFBool::changed, this, &WbViewpoint::updateFollowOrientation);
+  connect(mFollowType, &WbSFString::changed, this, &WbViewpoint::updateFollowSolidState);
+  connect(mFollowType, &WbSFString::changed, this, &WbViewpoint::updateFollowType);
   connect(mLensFlare, &WbSFNode::changed, this, &WbViewpoint::updateLensFlare);
   connect(mAmbientOcclusionRadius, &WbSFDouble::changed, this, &WbViewpoint::updateAmbientOcclusionRadius);
   connect(mBloomThreshold, &WbSFDouble::changed, this, &WbViewpoint::updateBloomThreshold);
@@ -236,9 +247,6 @@ void WbViewpoint::reset() {
 
 void WbViewpoint::terminateFollowUp() {
   mFollowedSolid = NULL;
-  mFollowEmptiedByUncheck = true;  // do nothing in mViewpoint when emitting the changed() signal of mFollow
-  mFollow->setValue(QString());
-  mFollowEmptiedByUncheck = false;
 }
 
 void WbViewpoint::emptyFollow() {
@@ -336,8 +344,8 @@ void WbViewpoint::updateFollowSolidState() {
   }
 }
 
-void WbViewpoint::updateFollowOrientation() {
-  emit followOrientationChanged(mFollowOrientation->value());
+void WbViewpoint::updateFollowType() {
+  emit followTypeChanged(followStringToType(mFollowType->value()));
 }
 
 void WbViewpoint::updateLensFlare() {
@@ -356,6 +364,7 @@ void WbViewpoint::updateAmbientOcclusionRadius() {
 
 void WbViewpoint::updateBloomThreshold() {
   WbFieldChecker::resetDoubleIfNegativeAndNotDisabled(this, mBloomThreshold, 21.0, -1.0);
+  updatePostProcessingEffects();
 }
 
 WbLensFlare *WbViewpoint::lensFlare() const {
@@ -368,10 +377,10 @@ void WbViewpoint::startFollowUpFromField() {
     startFollowUp(followedSolid, false);
 }
 
-void WbViewpoint::setFollowOrientation(bool follow) {
-  disconnect(mFollowOrientation, &WbSFBool::changed, this, &WbViewpoint::updateFollowOrientation);
-  mFollowOrientation->setValue(follow);
-  connect(mFollowOrientation, &WbSFBool::changed, this, &WbViewpoint::updateFollowOrientation);
+void WbViewpoint::setFollowType(int followType) {
+  disconnect(mFollowType, &WbSFBool::changed, this, &WbViewpoint::updateFollowType);
+  mFollowType->setValue(followTypeToString(followType));
+  connect(mFollowType, &WbSFBool::changed, this, &WbViewpoint::updateFollowType);
 }
 
 void WbViewpoint::recomputeFollowField() {
@@ -504,7 +513,7 @@ void WbViewpoint::createWrenObjects() {
           &WbViewpoint::updateRenderingMode);
 
   const bool coordinateSystemIsVisible =
-    !WbSimulationState::instance()->isFast() &&
+    WbSimulationState::instance()->isRendering() &&
     WbWrenRenderingContext::instance()->isOptionalRenderingEnabled(WbWrenRenderingContext::VF_COORDINATE_SYSTEM);
   if (coordinateSystemIsVisible)
     createCoordinateSystem();
@@ -591,7 +600,7 @@ void WbViewpoint::updateNear() {
 
   if (mFar->value() > 0.0 and mFar->value() < mNear->value()) {
     mNear->setValue(mFar->value());
-    warn(tr("'near' is greater than 'far'. Setting 'near' to %1.").arg(mNear->value()));
+    parsingWarn(tr("'near' is greater than 'far'. Setting 'near' to %1.").arg(mNear->value()));
   }
 
   if (areWrenObjectsInitialized())
@@ -604,7 +613,7 @@ void WbViewpoint::updateFar() {
 
   if (mFar->value() > 0.0 and mFar->value() < mNear->value()) {
     mFar->setValue(mNear->value() + 1.0);
-    warn(tr("'far' is less than 'near'. Setting 'far' to %1.").arg(mFar->value()));
+    parsingWarn(tr("'far' is less than 'near'. Setting 'far' to %1.").arg(mFar->value()));
     return;
   }
 
@@ -657,6 +666,26 @@ void WbViewpoint::updateOrthographicViewHeight() {
   emit cameraParametersChanged();
 }
 
+QString WbViewpoint::followTypeToString(int type) {
+  if (type == FOLLOW_MOUNTED)
+    return "Mounted Shot";
+  else if (type == FOLLOW_PAN_AND_TILT)
+    return "Pan and Tilt Shot";
+  else if (type == FOLLOW_TRACKING)
+    return "Tracking Shot";
+  return "None";
+}
+
+int WbViewpoint::followStringToType(const QString &type) {
+  if (type == "Tracking Shot")
+    return FOLLOW_TRACKING;
+  else if (type == "Mounted Shot")
+    return FOLLOW_MOUNTED;
+  else if (type == "Pan and Tilt Shot")
+    return FOLLOW_PAN_AND_TILT;
+  return FOLLOW_NONE;
+}
+
 void WbViewpoint::updateFieldOfViewY() {
   mTanHalfFieldOfViewY = tan(0.5 * mFieldOfView->value());  // stored for reuse in viewpointRay()
 
@@ -676,7 +705,7 @@ void WbViewpoint::updateOptionalRendering(int optionalRendering) {
 }
 
 void WbViewpoint::updateFollow() {
-  if (mFollowChangedBySelection || mFollowChangedBySolidName || mFollowEmptiedByDestroyedSolid || mFollowEmptiedByUncheck)
+  if (mFollowChangedBySelection || mFollowChangedBySolidName || mFollowEmptiedByDestroyedSolid)
     return;
 
   if (!mFollow->value().isEmpty()) {
@@ -686,7 +715,7 @@ void WbViewpoint::updateFollow() {
       emit followInvalidated(true);  // checks the follow object action at the WbView3D level
       return;
     }
-    WbLog::warning(tr("Viewpoint's follow field is filled with an invalid Solid name."));
+    parsingWarn(tr("'follow' field is filled with an invalid Solid name."));
   }
   mFollowedSolid = NULL;
   emit followInvalidated(false);  // unchecks the follow object action at the WbView3D level
@@ -709,9 +738,11 @@ void WbViewpoint::updateFollowUp() {
   const WbVector3 delta(followedSolidCurrentPosition - mFollowedSolidPreviousPosition);
   mFollowedSolidPreviousPosition = followedSolidCurrentPosition;
 
-  WbMatrix3 followedObjectDeltaOrientation;
   if (!mIsLocked) {
-    if (mFollowOrientation->value()) {
+    int type = followStringToType(mFollowType->value());
+    if (type == FOLLOW_PAN_AND_TILT)
+      lookAt(mFollowedSolid->position(), WbWorld::instance()->worldInfo()->upVector());
+    else if (type == FOLLOW_MOUNTED) {
       // Update Orientation
       WbMatrix3 solidRotation = mFollowedSolid->rotationMatrix() * mFollowedSolidReferenceRotation.transposed();
       WbRotation newOrientation = WbRotation(solidRotation * mViewPointReferenceRotation.toMatrix3());
@@ -719,11 +750,14 @@ void WbViewpoint::updateFollowUp() {
       mOrientation->setValue(newOrientation);
       // Update Position (position is computed relatively to the solid)
       mPosition->setValue(mFollowedSolid->position() + solidRotation * mReferenceOffset);
-    } else {
+    } else if (type == FOLLOW_TRACKING) {
       mEquilibriumVector += delta;
-
-      const double mass =
-        ((mFollowSmoothness->value() < 0.05) ? 0.0 : (mFollowSmoothness->value() > 1.0) ? 1.0 : mFollowSmoothness->value());
+      // clang-format off
+      // clang-format 11.0.0 is not compatible with previous versions with respect to nested conditional operators
+      const double mass = ((mFollowSmoothness->value() < 0.05) ? 0.0 :
+                           (mFollowSmoothness->value() > 1.0)  ? 1.0 :
+                                                                 mFollowSmoothness->value());
+      // clang-format on
       // If mass is 0, we instantly move the viewpoint to its equilibrium position.
       if (mass == 0.0) {
         // Moves the rotation point if a drag rotating the viewpoint is active
@@ -863,7 +897,7 @@ void WbViewpoint::applyOptionalRenderingToWren(int optionalRendering) {
       break;
     case WbWrenRenderingContext::VF_COORDINATE_SYSTEM: {
       const bool visible =
-        !WbSimulationState::instance()->isFast() &&
+        WbSimulationState::instance()->isRendering() &&
         WbWrenRenderingContext::instance()->isOptionalRenderingEnabled(WbWrenRenderingContext::VF_COORDINATE_SYSTEM);
       showCoordinateSystem(visible);
       wr_viewport_set_visibility_mask(mWrenViewport, WbWrenRenderingContext::instance()->visibilityMask());
@@ -881,7 +915,7 @@ void WbViewpoint::applyOptionalRenderingToWren() {
 
   if (WbWrenRenderingContext::instance()->isOptionalRenderingEnabled(WbWrenRenderingContext::VF_COORDINATE_SYSTEM)) {
     const bool visible =
-      !WbSimulationState::instance()->isFast() &&
+      WbSimulationState::instance()->isRendering() &&
       WbWrenRenderingContext::instance()->isOptionalRenderingEnabled(WbWrenRenderingContext::VF_COORDINATE_SYSTEM);
     showCoordinateSystem(visible);
   }
@@ -890,10 +924,17 @@ void WbViewpoint::applyOptionalRenderingToWren() {
 }
 
 void WbViewpoint::applyRenderingModeToWren() {
-  if (WbWrenRenderingContext::instance()->renderingMode() == WbWrenRenderingContext::RM_WIREFRAME)
+  int wireframeRendering;
+  if (WbWrenRenderingContext::instance()->renderingMode() == WbWrenRenderingContext::RM_WIREFRAME) {
     wr_viewport_set_polygon_mode(mWrenViewport, WR_VIEWPORT_POLYGON_MODE_LINE);
-  else
+    wireframeRendering = 1;
+  } else {
     wr_viewport_set_polygon_mode(mWrenViewport, WR_VIEWPORT_POLYGON_MODE_FILL);
+    wireframeRendering = 0;
+  }
+  wr_shader_program_set_custom_uniform_value(WbWrenShaders::pbrStencilAmbientEmissiveShader(), "wireframeRendering",
+                                             WR_SHADER_PROGRAM_UNIFORM_TYPE_INT,
+                                             reinterpret_cast<const char *>(&wireframeRendering));
 
   wr_viewport_set_visibility_mask(mWrenViewport, WbWrenRenderingContext::instance()->visibilityMask());
 }
@@ -1144,6 +1185,8 @@ void WbViewpoint::updatePostProcessingEffects() {
       mWrenBloom->detachFromViewport();
     else
       mWrenBloom->setup(mWrenViewport);
+
+    mWrenBloom->setThreshold(mBloomThreshold->value());
   }
 
   emit refreshRequired();
@@ -1257,20 +1300,18 @@ void WbViewpoint::orbitTo(const WbVector3 &targetUnitVector, const WbRotation &t
   WbWorld::instance()->setModified();
 
   // first, we need to calculate the orientation of the world as this will be applied to all orbits
-  WbVector3 gravityUpVector = -WbWorld::instance()->worldInfo()->gravityUnitVector();
-  WbVector3 defaultUpVector = WbVector3(0, 1, 0);
-
-  // In the case of the gravity vector being the default create the identity quaternion
+  const WbVector3 &defaultUpVector = WbVector3(0, 1, 0);
+  const WbVector3 &gravityUpVector = -WbWorld::instance()->worldInfo()->gravityUnitVector();
   if (gravityUpVector.dot(defaultUpVector) > 0.9999)
-    mGravitySpaceQuaternion = WbQuaternion();
-  // The gravity vector is the opposite of the default, so our transform is a vertical flip
+    // In the case of the gravity vector being the default create the identity quaternion
+    mSpaceQuaternion = WbQuaternion();
   else if (gravityUpVector.dot(defaultUpVector) < -0.9999)
-    mGravitySpaceQuaternion = WbQuaternion(WbVector3(0, 0, 1), M_PI);
-  // otherwise we can safely get a rotation axis using the cross product of both vectors
-  else
-    mGravitySpaceQuaternion = WbQuaternion(defaultUpVector.cross(gravityUpVector), gravityUpVector.angle(defaultUpVector));
-
-  mGravitySpaceQuaternion.normalize();
+    // The gravity vector is the opposite of the default, so our transform is a vertical flip
+    mSpaceQuaternion = WbQuaternion(WbVector3(0, 0, 1), M_PI);
+  else {  // otherwise we can safely get a rotation axis using the cross product of both vectors
+    mSpaceQuaternion = WbQuaternion(defaultUpVector.cross(gravityUpVector), gravityUpVector.angle(defaultUpVector));
+    mSpaceQuaternion.normalize();
+  }
 
   const WbNode *selectedNode = reinterpret_cast<WbNode *>(WbSelection::instance()->selectedNode());
   // for UX reasons, we want the default rotation height just above the floor,
@@ -1296,10 +1337,9 @@ void WbViewpoint::orbitTo(const WbVector3 &targetUnitVector, const WbRotation &t
     mOrbitRadius = newOrbitRadius;
 
   mCenterToViewpointUnitVector = centerToViewpoint / mOrbitRadius;
-  mOrbitTargetUnitVector = mGravitySpaceQuaternion * targetUnitVector;
-  mInitialOrientationQuaternion =
-    mGravitySpaceQuaternion * WbQuaternion(mOrientation->value().axis(), mOrientation->value().angle());
-  mFinalOrientationQuaternion = mGravitySpaceQuaternion * WbQuaternion(targetRotation.axis(), targetRotation.angle());
+  mOrbitTargetUnitVector = mSpaceQuaternion * targetUnitVector;
+  mInitialOrientationQuaternion = mSpaceQuaternion * WbQuaternion(mOrientation->value().axis(), mOrientation->value().angle());
+  mFinalOrientationQuaternion = mSpaceQuaternion * WbQuaternion(targetRotation.axis(), targetRotation.angle());
   mInitialOrientationQuaternion.normalize();
   mFinalOrientationQuaternion.normalize();
 
@@ -1341,10 +1381,10 @@ void WbViewpoint::firstOrbitStep() {
   WbVector3 orbitAxis;
   // choose prefereable axes for axis-to-axis rotations
   if (mCenterToViewpointUnitVector.dot(mOrbitTargetUnitVector) < -0.99) {
-    if ((mGravitySpaceQuaternion.conjugated() * mOrbitTargetUnitVector).y() == 0.0)
-      orbitAxis = mGravitySpaceQuaternion * WbVector3(0, 1, 0);
+    if ((mSpaceQuaternion.conjugated() * mOrbitTargetUnitVector).y() == 0.0)
+      orbitAxis = mSpaceQuaternion * WbVector3(0, 1, 0);
     else
-      orbitAxis = mGravitySpaceQuaternion * WbVector3(0, 0, 1);
+      orbitAxis = mSpaceQuaternion * WbVector3(0, 0, 1);
   } else {
     orbitAxis = mOrbitTargetUnitVector.cross(mCenterToViewpointUnitVector).normalized();
   }
@@ -1494,8 +1534,11 @@ void WbViewpoint::exportNodeFields(WbVrmlWriter &writer) const {
 
   if (writer.isX3d()) {
     writer << " exposure=\'" << mExposure->value() << "\'";
+    writer << " bloomThreshold=\'" << mBloomThreshold->value() << "\'";
     writer << " zNear=\'" << mNear->value() << "\'";
+    writer << " far=\'" << mFar->value() << "\'";
     writer << " followSmoothness=\'" << mFollowSmoothness->value() << "\'";
+    writer << " ambientOcclusionRadius=\'" << mAmbientOcclusionRadius->value() << "\'";
     if (mFollowedSolid)
       writer << " followedId=\'n" << QString::number(mFollowedSolid->uniqueId()) << "\'";
   }

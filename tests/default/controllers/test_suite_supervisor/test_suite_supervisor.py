@@ -1,4 +1,4 @@
-# Copyright 1996-2019 Cyberbotics Ltd.
+# Copyright 1996-2021 Cyberbotics Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ class TestSuite (Supervisor):
         self.isParserTest = "parser" in self.getCustomData()
         isDefaultWorld = "empty" in self.getCustomData()
         if isDefaultWorld:
-            self.cwdPrefix = '../../../../tests/parser/'
+            self.cwdPrefix = '../../../parser/'
         else:
             self.cwdPrefix = '../../'
         self.lastSimulation = False
@@ -177,8 +177,9 @@ class TestSuite (Supervisor):
             line.strip()
             if line:
                 [world, expected] = shlex.split(line)
-                if os.path.normpath(world) == self.currentSimulationFilename.replace(os.environ['WEBOTS_HOME'] +
-                                                                                     os.sep + 'tests' + os.sep, ''):
+                localWorldPath = self.currentSimulationFilename.replace(os.path.dirname(os.path.abspath(self.cwdPrefix)), '')
+                localWorldPath = localWorldPath.strip(os.sep)
+                if os.path.normpath(world) == localWorldPath:
                     found = True
                     if expected != 'VOID':
                         self.expectedString = expected
@@ -235,11 +236,11 @@ class TestSuite (Supervisor):
                 self.loadNextWorld()
                 return
         else:
-            receiver = self.getReceiver("ts_receiver")
+            receiver = self.getDevice("ts_receiver")
             receiver.enable(basicTimeStep)
 
-        # 10 seconds before executing the next world
-        timeout = time.time() + 10
+        # 30 seconds before executing the next world
+        timeout = time.time() + 30
 
         running_controllers_pid = []
         test_started = False

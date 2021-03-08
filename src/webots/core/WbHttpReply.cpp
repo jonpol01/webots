@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,31 +35,41 @@ QByteArray WbHttpReply::forgeHTMLReply(const QString &htmlContent) {
   reply.append("HTTP/1.1 200 OK\r\n");
   reply.append("Access-Control-Allow-Origin: *\r\n");
   reply.append("Content-Type: text/html\r\n");
-  reply.append(QString("Content-Length: %1\r\n").arg(htmlContent.length()));
+  reply.append(QString("Content-Length: %1\r\n").arg(htmlContent.length()).toUtf8());
   reply.append("\r\n");
-  reply.append(htmlContent);
+  reply.append(htmlContent.toUtf8());
   return reply;
 }
 
-QByteArray WbHttpReply::forgeImageReply(const QString &imageFileName) {
+QByteArray WbHttpReply::forgeFileReply(const QString &fileName) {
   QByteArray reply;
 
-  QFile imageFile(imageFileName);
-  if (!imageFile.open(QIODevice::ReadOnly))
+  QFile file(fileName);
+  if (!file.open(QIODevice::ReadOnly))
     return forge404Reply();
 
-  QByteArray imageData = imageFile.readAll();
-  int imageSize = imageData.length();
-  QFileInfo fi(imageFile);
-  QString imageExtension = fi.suffix().toLower();
-
+  const QByteArray data = file.readAll();
+  const QString mimeType = WbHttpReply::mimeType(fileName, true);
   reply.append("HTTP/1.1 200 OK\r\n");
   reply.append("Access-Control-Allow-Origin: *\r\n");
-  reply.append("Cache-Control: public, max-age=3600\r\n");  // Help the browsers to cache the images for 1 hour.
-  reply.append(QString("Content-Type: image/%1\r\n").arg(imageExtension));
-  reply.append(QString("Content-Length: %1\r\n").arg(imageSize));
+  reply.append("Cache-Control: public, max-age=3600\r\n");  // Help the browsers to cache the file for 1 hour.
+  reply.append(QString("Content-Type: %1\r\n").arg(mimeType).toUtf8());
+  reply.append(QString("Content-Length: %1\r\n").arg(data.length()).toUtf8());
   reply.append("\r\n");
-  reply.append(imageData);
+  reply.append(data);
 
   return reply;
+}
+
+QString WbHttpReply::mimeType(const QString &url, bool generic) {
+  const QString extension = url.mid(url.lastIndexOf('.') + 1).toLower();
+  QString type;
+  if (extension == "png" || extension == "jpg" || extension == "jpeg")
+    return QString("image/%1").arg(extension);
+  else if (extension == "html" || extension == "css")
+    return QString("text/%1").arg(extension);
+  else if (extension == "js")
+    return "application/javascript";
+  else
+    return generic ? "application/octet-stream" : "";  // generic binary format
 }

@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +47,17 @@ namespace wren {
       textureId = static_cast<size_t>(mTextures[0].first->glName());
 
     return static_cast<size_t>(mCacheData->id() << 1) | (textureId << 16) | (programId << 32) | mHasPremultipliedAlpha;
+  }
+
+  PhongMaterial *PhongMaterial::createMaterial() {
+    PhongMaterial *material = new PhongMaterial();
+    material->init();
+    return material;
+  }
+
+  void PhongMaterial::deleteMaterial(PhongMaterial *material) {
+    material->releaseMaterial();
+    delete material;
   }
 
   void PhongMaterial::clearMaterial() {
@@ -152,18 +163,19 @@ namespace wren {
     Material::bindTextures();
   }
 
-  PhongMaterial::PhongMaterial() : Material(), mColorPerVertex(false) {
+  PhongMaterial::PhongMaterial() : Material(), mColorPerVertex(false), mCacheData(NULL) {
+    mMaterialStructure = new WrMaterial;
+    mMaterialStructure->type = WR_MATERIAL_PHONG;
+    mMaterialStructure->data = reinterpret_cast<void *>(this);
+  }
+
+  void PhongMaterial::init() {
     GlslLayout::PhongMaterial material;
     material.mAmbient = glm::vec4(gVec3Ones, 1.0f);
     material.mDiffuse = glm::vec4(gVec3Ones, 1.0f);
     material.mSpecularAndExponent = glm::vec4(gVec3Ones, 25.0f);
     material.mEmissiveAndOpacity = glm::vec4(gVec3Zeros, 1.0f);
     material.mTextureFlags = glm::vec4(0.0f);
-
-    mMaterialStructure = new WrMaterial;
-    mMaterialStructure->type = WR_MATERIAL_PHONG;
-    mMaterialStructure->data = reinterpret_cast<void *>(this);
-
     updateMaterial(material);
   }
 

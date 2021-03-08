@@ -25,7 +25,7 @@ CardboardBox {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/CardboardBox.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/containers/protos/CardboardBox.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/CardboardBox.proto]({{ url.github_tree }}/projects/objects/factory/containers/protos/CardboardBox.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -35,6 +35,32 @@ CardboardBox {
 - `size`: Defines the size of the cardboard box.
 
 - `mass`: Defines the mass of the cardboard box in kg. A value smaller or equal to 0 remove the physics of the cardboard box.
+
+### MetalStorageBox
+
+A metal storage box.
+
+%figure
+
+![MetalStorageBox](images/objects/containers/MetalStorageBox/model.thumbnail.png)
+
+%end
+
+Derived from [Solid](../reference/solid.md).
+
+```
+MetalStorageBox {
+  SFString   name        "metal storage box"
+  SFVec3f    translation 0 0 0
+  SFRotation rotation    0 0 1 0
+  SFFloat    mass        0
+}
+```
+
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/MetalStorageBox.proto]({{ url.github_tree }}/projects/objects/factory/containers/protos/MetalStorageBox.proto)"
+
+> **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
+[More information.](https://cyberbotics.com/webots_assets_license)
 
 ### PlasticCrate
 
@@ -54,11 +80,39 @@ PlasticCrate {
   SFRotation rotation    0 1 0 0
   SFString   name        "plastic crate"
   SFVec3f    size        0.6 0.6 0.6
+  SFColor    color       0.9 0.2 0.2
   SFFloat    mass        0
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/PlasticCrate.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/containers/protos/PlasticCrate.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/PlasticCrate.proto]({{ url.github_tree }}/projects/objects/factory/containers/protos/PlasticCrate.proto)"
+
+> **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
+[More information.](https://cyberbotics.com/webots_assets_license)
+
+### PlasticFruitBox
+
+A plastic box.
+
+%figure
+
+![PlasticFruitBox](images/objects/containers/PlasticFruitBox/model.thumbnail.png)
+
+%end
+
+Derived from [Solid](../reference/solid.md).
+
+```
+PlasticFruitBox {
+  SFString   name        "plastic fruit box"
+  SFVec3f    translation 0 0 0
+  SFRotation rotation    0 1 0 0
+  SFColor    color       0 1 0.5
+  SFFloat    mass        0
+}
+```
+
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/PlasticFruitBox.proto]({{ url.github_tree }}/projects/objects/factory/containers/protos/PlasticFruitBox.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -87,7 +141,7 @@ WoodenBox {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/WoodenBox.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/containers/protos/WoodenBox.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/containers/protos/WoodenBox.proto]({{ url.github_tree }}/projects/objects/factory/containers/protos/WoodenBox.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -98,7 +152,7 @@ WoodenBox {
 
 - `mass`: Defines the mass of the wooden box in kg. A value smaller or equal to 0 remove the physics of the wooden box.
 
-## Conveyor Belt
+## Conveyors
 
 ### ConveyorBelt
 
@@ -106,7 +160,7 @@ A customizable conveyor belt moving at a constant speed.
 
 %figure
 
-![ConveyorBelt](images/objects/conveyor_belt/ConveyorBelt/model.thumbnail.png)
+![ConveyorBelt](images/objects/conveyors/ConveyorBelt/model.thumbnail.png)
 
 %end
 
@@ -124,11 +178,10 @@ ConveyorBelt {
   SFFloat    speed            0.5
   SFFloat    acceleration     -1
   SFFloat    timer            0.0
-  SFFloat    textureAnimation 0.008
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/conveyor\_belt/protos/ConveyorBelt.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/conveyor_belt/protos/ConveyorBelt.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/conveyors/protos/ConveyorBelt.proto]({{ url.github_tree }}/projects/objects/factory/conveyors/protos/ConveyorBelt.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -147,7 +200,48 @@ ConveyorBelt {
 
 - `timer`: Defines for how long the conveyor belt should move (it will move forever if set to 0).
 
-- `textureAnimation`: defines the speed of the texture animation.
+### ConveyorPlatform
+
+A controllable conveyor platform.
+The default controller makes it move at a constant speed for a configurable amount of time.
+The conveyor contains 3 controllable LEDs.
+
+%figure
+
+![ConveyorPlatform](images/objects/conveyors/ConveyorPlatform/model.thumbnail.png)
+
+%end
+
+Derived from [Robot](../reference/robot.md).
+
+```
+ConveyorPlatform {
+   SFVec3f     translation      0 0 0
+   SFRotation  rotation         0 1 0 0
+   SFString    name             "Conveyor platform"
+   SFString    model            "Conveyor platform"
+   SFString    controller       "conveyor_belt"
+   SFFloat     speed            0.3
+   SFFloat     acceleration     -1
+   SFFloat     timer            0.0
+   SFFloat     textureAnimation 0.5
+}
+```
+
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/conveyors/protos/ConveyorPlatform.proto]({{ url.github_tree }}/projects/objects/factory/conveyors/protos/ConveyorPlatform.proto)"
+
+> **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
+[More information.](https://cyberbotics.com/webots_assets_license)
+
+#### ConveyorPlatform Field Summary
+
+- `speed`: Defines the rubber band speed in meters per second.
+
+- `acceleration`: Defines the acceleration of the conveyor belt.
+
+- `timer`: Defines for how long the conveyor belt should move (it will move forever if set to 0).
+
+- `textureAnimation`: Defines the speed of the texture animation.
 
 ## Fire Extinguisher
 
@@ -172,7 +266,7 @@ FireExtinguisher {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/fire\_extinguisher/protos/FireExtinguisher.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/fire_extinguisher/protos/FireExtinguisher.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/fire\_extinguisher/protos/FireExtinguisher.proto]({{ url.github_tree }}/projects/objects/factory/fire_extinguisher/protos/FireExtinguisher.proto)"
 
 > **License**: Attribution-NonCommercial 4.0 International (original model by 3DHaupt)
 [More information.](https://creativecommons.org/licenses/by-nc/4.0)
@@ -205,7 +299,7 @@ SquareManhole {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/manhole/protos/SquareManhole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/manhole/protos/SquareManhole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/manhole/protos/SquareManhole.proto]({{ url.github_tree }}/projects/objects/factory/manhole/protos/SquareManhole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -214,7 +308,7 @@ SquareManhole {
 
 - `size`: Defines the size of the manhole.
 
-- `enableBoundingObject`: Defines whether the fire manhole should have a bounding object.
+- `enableBoundingObject`: Defines whether the manhole should have a bounding object.
 
 ## Pallet
 
@@ -244,7 +338,7 @@ WoodenPallet {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pallet/protos/WoodenPallet.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/pallet/protos/WoodenPallet.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pallet/protos/WoodenPallet.proto]({{ url.github_tree }}/projects/objects/factory/pallet/protos/WoodenPallet.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -290,7 +384,7 @@ WoodenPalletStack {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pallet/protos/WoodenPalletStack.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/pallet/protos/WoodenPalletStack.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pallet/protos/WoodenPalletStack.proto]({{ url.github_tree }}/projects/objects/factory/pallet/protos/WoodenPalletStack.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -301,7 +395,7 @@ WoodenPalletStack {
 
 - `palletSize`: Defines the size of one pallet.
 
-- `palletLathNumber`: Defines the number of lath of each pallet.s
+- `palletLathNumber`: Defines the number of lath of each pallets.
 
 - `palletLathWidth`: Defines the width of the pallet laths.
 
@@ -337,7 +431,7 @@ LJoint {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/LJoint.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/pipes/protos/LJoint.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/LJoint.proto]({{ url.github_tree }}/projects/objects/factory/pipes/protos/LJoint.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -370,7 +464,7 @@ PipeSection {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/PipeSection.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/pipes/protos/PipeSection.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/PipeSection.proto]({{ url.github_tree }}/projects/objects/factory/pipes/protos/PipeSection.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -407,7 +501,7 @@ TJoint {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/TJoint.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/pipes/protos/TJoint.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/pipes/protos/TJoint.proto]({{ url.github_tree }}/projects/objects/factory/pipes/protos/TJoint.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -442,7 +536,7 @@ Bolt {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Bolt.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Bolt.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Bolt.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Bolt.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -469,17 +563,19 @@ Derived from [Solid](../reference/solid.md).
 
 ```
 CapScrew {
-  SFVec3f    translation      0 0 0
-  SFRotation rotation         0 0 1 0
-  SFString   name             "cap screw"
-  SFNode     appearance       OldSteel {}
-  SFFloat    screwRadius      0.006
-  SFFloat    screwLength      0.05
-  SFString   contactMaterial  "default"
+  SFVec3f    translation           0 0 0
+  SFRotation rotation              0 0 1 0
+  SFString   name                  "cap screw"
+  SFNode     appearance            OldSteel {}
+  SFFloat    screwRadius           0.006
+  SFFloat    screwLength           0.05
+  SFString   contactMaterial       "default"
+  SFBool     enablePhysics         TRUE
+  SFBool     enableBoundingObject  TRUE
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/CapScrew.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/CapScrew.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/CapScrew.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/CapScrew.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -491,6 +587,10 @@ CapScrew {
 - `screwRadius`: Defines the radius of the screw.
 
 - `screwLength`: Defines the length of the screw.
+
+- `enablePhysics`: Defines whether the screw should have physics.
+
+- `enableBoundingObject`: Defines whether the screw should have a bounding object.
 
 ### ElectricalPlug
 
@@ -517,7 +617,7 @@ ElectricalPlug {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/ElectricalPlug.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/ElectricalPlug.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/ElectricalPlug.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/ElectricalPlug.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -553,14 +653,14 @@ EmergencyButton {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/EmergencyButton.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/EmergencyButton.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/EmergencyButton.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/EmergencyButton.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
 
 #### EmergencyButton Field Summary
 
-- `includePositionSensor`: Defines if a PositionSensor node should be included to retrieve the button position.
+- `includePositionSensor`: Defines if a [PositionSensor](../reference/positionsensor.md) node should be included to retrieve the button position.
 
 ### EyeScrew
 
@@ -586,7 +686,7 @@ EyeScrew {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/EyeScrew.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/EyeScrew.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/EyeScrew.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/EyeScrew.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -620,7 +720,7 @@ Hammer {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Hammer.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Hammer.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Hammer.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Hammer.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -649,7 +749,7 @@ Nut {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Nut.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Nut.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Nut.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Nut.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -683,7 +783,7 @@ PaintBucket {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/PaintBucket.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/PaintBucket.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/PaintBucket.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/PaintBucket.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -710,7 +810,7 @@ PlatformCart {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/PlatformCart.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/PlatformCart.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/PlatformCart.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/PlatformCart.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -741,7 +841,7 @@ ScrewHole {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/ScrewHole.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/ScrewHole.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/ScrewHole.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/ScrewHole.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -767,7 +867,7 @@ Screwdriver {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Screwdriver.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Screwdriver.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Screwdriver.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Screwdriver.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -796,7 +896,7 @@ Washer {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Washer.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Washer.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Washer.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Washer.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -831,7 +931,7 @@ Wrench {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Wrench.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/tools/protos/Wrench.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/tools/protos/Wrench.proto]({{ url.github_tree }}/projects/objects/factory/tools/protos/Wrench.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -862,12 +962,12 @@ LargeValve {
   SFFloat    jointFriction   0.5
   SFString   controller      "valve_turner"
   SFBool     supervisor      FALSE
-  SFString   absoluteStop    "15.7079632679"
+  MFString   absoluteStop    "15.7079632679"
   SFString   contactMaterial "default"
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/LargeValve.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/valves/protos/LargeValve.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/LargeValve.proto]({{ url.github_tree }}/projects/objects/factory/valves/protos/LargeValve.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -902,7 +1002,7 @@ LeverValve {
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/LeverValve.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/valves/protos/LeverValve.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/LeverValve.proto]({{ url.github_tree }}/projects/objects/factory/valves/protos/LeverValve.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)
@@ -931,11 +1031,11 @@ SmallValve {
   SFFloat    jointFriction 0.1
   SFString   controller    "valve_turner"
   SFBool     supervisor    FALSE
-  SFString   absoluteStop  "15.7079632679"
+  MFString   absoluteStop  "15.7079632679"
 }
 ```
 
-> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/SmallValve.proto](https://github.com/cyberbotics/webots/tree/master/projects/objects/factory/valves/protos/SmallValve.proto)"
+> **File location**: "[WEBOTS\_HOME/projects/objects/factory/valves/protos/SmallValve.proto]({{ url.github_tree }}/projects/objects/factory/valves/protos/SmallValve.proto)"
 
 > **License**: Copyright Cyberbotics Ltd. Licensed for use only with Webots.
 [More information.](https://cyberbotics.com/webots_assets_license)

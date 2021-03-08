@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ public:
   void powerOn(bool) override;
 
   bool isPIDPositionControl() const { return (!mUserControl && mMotorForceOrTorque != 0.0 && !std::isinf(mTargetPosition)); }
+  bool isConfigureDone() const;
 
   bool hasMuscles() const { return !mMuscles->isEmpty(); }
 

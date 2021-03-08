@@ -9,13 +9,13 @@ Device {
 
 ### Description
 
-This abstract node (not instanciable) represents a robot device (actuator and/or sensor).
+This abstract node (that cannot be instantiated) represents a robot device (actuator and/or sensor).
 
 ### Device Functions
 
 #### `wb_device_get_model`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -97,7 +97,7 @@ This function returns NULL if the WbDeviceTag does not match a valid device, or 
 
 #### `wb_device_get_name`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -179,7 +179,7 @@ This function returns NULL if the WbDeviceTag does not match a valid device.
 
 #### `wb_device_get_node_type`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 

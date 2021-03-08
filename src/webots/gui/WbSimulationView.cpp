@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -109,7 +109,8 @@ WbSimulationView::WbSimulationView(QWidget *parent, const QString &toolBarAlign)
   createActions();
   mTitleBar = new WbDockTitleBar(false, this);
   mToolBar = createToolBar();
-  mNeedRestoreFastMode = false;
+  mNeedToRestoreBlackRenderingOverlay = false;
+  mNeedToRestoreRendering = false;
 
   // top level layout
   QVBoxLayout *vlayout = new QVBoxLayout(this);
@@ -127,15 +128,17 @@ WbSimulationView::WbSimulationView(QWidget *parent, const QString &toolBarAlign)
 
   WbSimulationState *state = WbSimulationState::instance();
 
-  //  show a black screen is fast mode is selected
-  if (state->mode() == WbSimulationState::FAST)
+  //  show a black screen if rendering is turned off
+  if (!state->isRendering())
     renderABlackScreen();
 
   connect(mTitleBar, &WbDockTitleBar::closeClicked, this, &WbSimulationView::hide);
   connect(mTitleBar, &WbDockTitleBar::maximizeClicked, this, &WbSimulationView::needsMaximize);
   connect(mTitleBar, &WbDockTitleBar::minimizeClicked, this, &WbSimulationView::needsMinimize);
   connect(mSplitter, &QSplitter::splitterMoved, this, &WbSimulationView::needsActionsUpdate);
-  connect(WbActionManager::instance()->action(WbActionManager::STEP), &QAction::triggered, mView3D, &WbView3D::unleashAndClean);
+  connect(WbActionManager::instance()->action(WbAction::STEP), &QAction::triggered, mView3D, &WbView3D::unleashAndClean);
+  connect(WbActionManager::instance()->action(WbAction::DISABLE_RENDERING), &QAction::triggered, this,
+          &WbSimulationView::disableRendering);
   connect(mView3D, &WbView3D::applicationActionsUpdateRequested, mSceneTree, &WbSceneTree::updateApplicationActions);
 
   // video recording
@@ -172,28 +175,28 @@ QToolBar *WbSimulationView::createToolBar() {
 
   mToolBar->addWidget(mShowSceneTreeButton);
 
-  QAction *action = manager->action(WbActionManager::ADD_NEW);
+  QAction *action = manager->action(WbAction::ADD_NEW);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
   mToolBar->addSeparator();
 
-  action = manager->action(WbActionManager::RESTORE_VIEWPOINT);
+  action = manager->action(WbAction::RESTORE_VIEWPOINT);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
-  action = manager->action(WbActionManager::VIEW_MENU);
+  action = manager->action(WbAction::VIEW_MENU);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
   QToolButton *viewMenuButton = dynamic_cast<QToolButton *>(mToolBar->widgetForAction(action));
   viewMenuButton->setPopupMode(QToolButton::InstantPopup);
   QMenu *viewMenu = new QMenu(viewMenuButton);
-  viewMenu->addAction(manager->action(WbActionManager::FRONT_VIEW));
-  viewMenu->addAction(manager->action(WbActionManager::BACK_VIEW));
-  viewMenu->addAction(manager->action(WbActionManager::LEFT_VIEW));
-  viewMenu->addAction(manager->action(WbActionManager::RIGHT_VIEW));
-  viewMenu->addAction(manager->action(WbActionManager::TOP_VIEW));
-  viewMenu->addAction(manager->action(WbActionManager::BOTTOM_VIEW));
+  viewMenu->addAction(manager->action(WbAction::FRONT_VIEW));
+  viewMenu->addAction(manager->action(WbAction::BACK_VIEW));
+  viewMenu->addAction(manager->action(WbAction::LEFT_VIEW));
+  viewMenu->addAction(manager->action(WbAction::RIGHT_VIEW));
+  viewMenu->addAction(manager->action(WbAction::TOP_VIEW));
+  viewMenu->addAction(manager->action(WbAction::BOTTOM_VIEW));
   viewMenuButton->setMenu(viewMenu);
 
   mToolBar->addSeparator();
@@ -201,15 +204,15 @@ QToolBar *WbSimulationView::createToolBar() {
   mToolBarExtensionMenu = mToolBar->findChild<QMenu *>();
   connect(mToolBarExtensionMenu, &QMenu::aboutToShow, this, &WbSimulationView::hideInappropriateToolBarItems);
 
-  action = manager->action(WbActionManager::OPEN_WORLD);
+  action = manager->action(WbAction::OPEN_WORLD);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
-  action = manager->action(WbActionManager::SAVE_WORLD);
+  action = manager->action(WbAction::SAVE_WORLD);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
-  action = manager->action(WbActionManager::RELOAD_WORLD);
+  action = manager->action(WbAction::RELOAD_WORLD);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
@@ -217,11 +220,11 @@ QToolBar *WbSimulationView::createToolBar() {
 
   mToolBar->addWidget(new WbSimulationStateIndicator(mToolBar));
 
-  action = manager->action(WbActionManager::RESET_SIMULATION);
+  action = manager->action(WbAction::RESET_SIMULATION);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
-  action = manager->action(WbActionManager::STEP);
+  action = manager->action(WbAction::STEP);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
@@ -234,12 +237,19 @@ QToolBar *WbSimulationView::createToolBar() {
   connect(WbApplication::instance(), &WbApplication::postWorldLoaded, this, &WbSimulationView::updatePlayButtons);
   connect(WbSimulationState::instance(), &WbSimulationState::modeChanged, this, &WbSimulationView::updatePlayButtons);
 
+  action = manager->action(WbAction::RENDERING);
+  mToolBar->addAction(action);
+  mToolBar->widgetForAction(action)->setObjectName("menuButton");
+
+  WbActionManager::instance()->updateRenderingButton();
+  connect(WbSimulationState::instance(), &WbSimulationState::renderingStateChanged, this, &WbSimulationView::updateRendering);
+
   mToolBar->addSeparator();
 
   mToolBar->addAction(mMovieAction);
   mToolBar->widgetForAction(mMovieAction)->setObjectName("menuButton");
 
-  action = manager->action(WbActionManager::ANIMATION);
+  action = manager->action(WbAction::ANIMATION);
   mToolBar->addAction(action);
   mToolBar->widgetForAction(action)->setObjectName("menuButton");
 
@@ -293,32 +303,32 @@ void WbSimulationView::createActions() {
   // TODO: for sure there is a clever location to do the following connections
   //       (this has nothing to do with a window)
   WbActionManager *manager = WbActionManager::instance();
-  connect(manager->action(WbActionManager::PAUSE), &QAction::triggered, this, &WbSimulationView::pause);
-  connect(manager->action(WbActionManager::STEP), &QAction::triggered, this, &WbSimulationView::step);
-  connect(manager->action(WbActionManager::REAL_TIME), &QAction::triggered, this, &WbSimulationView::realTime);
-  connect(manager->action(WbActionManager::RUN), &QAction::triggered, this, &WbSimulationView::run);
-  connect(manager->action(WbActionManager::FAST), &QAction::triggered, this, &WbSimulationView::fast);
+  connect(manager->action(WbAction::PAUSE), &QAction::triggered, this, &WbSimulationView::pause);
+  connect(manager->action(WbAction::STEP), &QAction::triggered, this, &WbSimulationView::step);
+  connect(manager->action(WbAction::REAL_TIME), &QAction::triggered, this, &WbSimulationView::realTime);
+  connect(manager->action(WbAction::FAST), &QAction::triggered, this, &WbSimulationView::fast);
+  connect(manager->action(WbAction::RENDERING), &QAction::triggered, this, &WbSimulationView::toggleRendering);
 
   // add actions available in full-screen mode to the current widget
   // otherwise they will be automatically disabled when the toolbar is hidden
-  addAction(manager->action(WbActionManager::PAUSE));
-  addAction(manager->action(WbActionManager::STEP));
-  addAction(manager->action(WbActionManager::REAL_TIME));
-  addAction(manager->action(WbActionManager::RUN));
-  addAction(manager->action(WbActionManager::FAST));
-  addAction(manager->action(WbActionManager::DEL));
-  addAction(manager->action(WbActionManager::MOVE_VIEWPOINT_TO_OBJECT));
+  addAction(manager->action(WbAction::PAUSE));
+  addAction(manager->action(WbAction::STEP));
+  addAction(manager->action(WbAction::REAL_TIME));
+  addAction(manager->action(WbAction::FAST));
+  addAction(manager->action(WbAction::RENDERING));
+  addAction(manager->action(WbAction::DEL));
+  addAction(manager->action(WbAction::MOVE_VIEWPOINT_TO_OBJECT));
 
   mMovieAction = new QAction(this);
   toggleMovieAction(false);
 
-  mTakeScreenshotAction = manager->action(WbActionManager::TAKE_SCREENSHOT);
+  mTakeScreenshotAction = manager->action(WbAction::TAKE_SCREENSHOT);
   connect(mTakeScreenshotAction, &QAction::triggered, this, &WbSimulationView::takeScreenshot);
   // so taking screenshots can be done in full-screen mode, when the toolbar is hidden
   addAction(mTakeScreenshotAction);
 
-  connect(manager->action(WbActionManager::SOUND_UNMUTE), &QAction::triggered, this, &WbSimulationView::unmuteSound);
-  connect(manager->action(WbActionManager::SOUND_MUTE), &QAction::triggered, this, &WbSimulationView::muteSound);
+  connect(manager->action(WbAction::SOUND_UNMUTE), &QAction::triggered, this, &WbSimulationView::unmuteSound);
+  connect(manager->action(WbAction::SOUND_MUTE), &QAction::triggered, this, &WbSimulationView::muteSound);
 }
 
 void WbSimulationView::setMaximized(bool maximized) {
@@ -381,7 +391,7 @@ void WbSimulationView::needsActionsUpdate(int position, int index) {
     hidden = false;
   }
 
-  updateToggleView3DAction(mView3D->width() > 0);
+  updateToggleView3DAction(mView3D->width() > 1);
 }
 
 void WbSimulationView::toggleSceneTreeVisibility() {
@@ -427,7 +437,7 @@ void WbSimulationView::setView3DVisibility(bool visible) {
     mSplitter->setSizes(sizes);
     updateToggleView3DAction(false);
 
-  } else if (visible && (view3DWidth == 0)) {
+  } else if (visible && view3DWidth <= 1) {
     // show view 3D
     if (lastSplitterPosition <= 0)
       lastSplitterPosition = mView3D->sizeHint().width();
@@ -471,7 +481,7 @@ void WbSimulationView::updateVisibility() {
 void WbSimulationView::unmuteSound() {
   WbPreferences::instance()->setValue("Sound/mute", false);
   const WbSimulationState::Mode mode = WbSimulationState::instance()->mode();
-  if (mode != WbSimulationState::RUN && mode != WbSimulationState::FAST)
+  if (mode != WbSimulationState::FAST && WbSimulationState::instance()->isRendering())
     WbSoundEngine::setMute(false);
   mSoundVolumeSlider->setSliderPosition(WbPreferences::instance()->value("Sound/volume", 80).toInt());
   connect(mSoundVolumeSlider, &QSlider::valueChanged, this, &WbSimulationView::updateSoundVolume);
@@ -542,7 +552,7 @@ void WbSimulationView::startVideoCapture(const QString &fileName, int codec, int
     mRecordingTimer->start(800);
     toggleMovieAction(true);
     mTakeScreenshotAction->setEnabled(false);
-    switchToRunModeIfNecessary();
+    showRenderingIfNecessary();
     WbMainWindow *mainWindow = dynamic_cast<WbMainWindow *>(parentWidget());
     if (mainWindow->isMinimized()) {
       mWasMinimized = true;
@@ -553,7 +563,7 @@ void WbSimulationView::startVideoCapture(const QString &fileName, int codec, int
 
 void WbSimulationView::stopVideoCapture(bool canceled) {
   WbVideoRecorder::instance()->stopRecording(canceled);
-  restoreFastModeIfNecessary();
+  restoreNoRenderingIfNecessary();
   if (mWasMinimized) {
     WbMainWindow *mainWindow = dynamic_cast<WbMainWindow *>(parentWidget());
     mainWindow->showMinimized();
@@ -580,8 +590,8 @@ void WbSimulationView::stopMovie() {
 }
 
 void WbSimulationView::makeMovie() {
-  if (WbSimulationState::instance()->isFast()) {
-    WbLog::warning(tr("Impossible to record a movie while running the simulation in 'Fast' mode."), true);
+  if (!WbSimulationState::instance()->isRendering()) {
+    WbLog::warning(tr("Impossible to record a movie while rendering is turned off."), true);
     return;
   }
 
@@ -605,23 +615,23 @@ void WbSimulationView::makeMovie() {
 
   // reset current simulation mode
   WbSimulationState::instance()->setMode(currentMode);
-  updateFastModeOverlay();
+  updateBlackRenderingOverlay();
 }
 
-void WbSimulationView::switchToRunModeIfNecessary() {
-  // remove "Fast Mode" overlay if necessary
-  if (WbSimulationState::instance()->isFast()) {
-    WbSimulationState::instance()->setMode(WbSimulationState::RUN);
-    mView3D->hideFastModeOverlay();
-    mNeedRestoreFastMode = true;
+void WbSimulationView::showRenderingIfNecessary() {
+  // remove "No Rendering" overlay if necessary
+  if (!WbSimulationState::instance()->isRendering()) {
+    WbSimulationState::instance()->setRendering(true);
+    mView3D->hideBlackRenderingOverlay();
+    mNeedToRestoreBlackRenderingOverlay = true;
   }
 }
 
-void WbSimulationView::restoreFastModeIfNecessary() {
-  if (mNeedRestoreFastMode) {
-    mView3D->showFastModeOverlay();
-    WbSimulationState::instance()->setMode(WbSimulationState::FAST);
-    mNeedRestoreFastMode = false;
+void WbSimulationView::restoreNoRenderingIfNecessary() {
+  if (mNeedToRestoreBlackRenderingOverlay) {
+    mView3D->showBlackRenderingOverlay();
+    WbSimulationState::instance()->setRendering(false);
+    mNeedToRestoreBlackRenderingOverlay = false;
   }
 }
 
@@ -642,7 +652,7 @@ void WbSimulationView::writeScreenshot(QImage image) {
     WbSimulationState::instance()->resumeSimulation();
     mIsScreenshotRequestedFromGui = false;
   }
-  restoreFastModeIfNecessary();
+  restoreNoRenderingIfNecessary();
 
   if (mWasMinimized) {
     WbMainWindow *mainWindow = dynamic_cast<WbMainWindow *>(parentWidget());
@@ -668,7 +678,7 @@ void WbSimulationView::takeScreenshotAndSaveAs(const QString &fileName, int qual
     return;
   }
   connect(mView3D, &WbView3D::screenshotReady, this, &WbSimulationView::writeScreenshot);
-  switchToRunModeIfNecessary();
+  showRenderingIfNecessary();
   mView3D->requestScreenshot();
 
   if (mIsScreenshotRequestedFromGui) {
@@ -744,19 +754,32 @@ void WbSimulationView::realTime() {
   WbSimulationState::instance()->setMode(WbSimulationState::REALTIME);
 }
 
-void WbSimulationView::run() {
-  WbSimulationState::instance()->setMode(WbSimulationState::RUN);
-}
-
 void WbSimulationView::fast() {
   WbSimulationState::instance()->setMode(WbSimulationState::FAST);
 }
 
-void WbSimulationView::updateFastModeOverlay() {
-  if (WbSimulationState::instance()->mode() == WbSimulationState::FAST)
-    renderABlackScreen();
-  else
+void WbSimulationView::disableRendering(bool disabled) {
+  if (disabled) {
+    mNeedToRestoreRendering = WbSimulationState::instance()->isRendering();
+    WbSimulationState::instance()->setRendering(false);
+  } else if (mNeedToRestoreRendering) {
+    mNeedToRestoreRendering = false;
+    WbSimulationState::instance()->setRendering(true);
+  }
+
+  WbActionManager::instance()->action(WbAction::RENDERING)->setEnabled(!disabled);
+  mView3D->setUserInteractionDisabled(WbAction::DISABLE_RENDERING, disabled);
+}
+
+void WbSimulationView::toggleRendering() {
+  WbSimulationState::instance()->setRendering(!WbSimulationState::instance()->isRendering());
+}
+
+void WbSimulationView::updateBlackRenderingOverlay() {
+  if (WbSimulationState::instance()->isRendering())
     retrieveSimulationView();
+  else
+    renderABlackScreen();
 }
 
 void WbSimulationView::prepareWorldLoading() {
@@ -792,10 +815,9 @@ void WbSimulationView::setWorld(WbSimulationWorld *w) {
   connect(cw, &WbControlledWorld::stepBlocked, this, &WbSimulationView::disableStepButton);
 
   // update save action based on simulation world state
-  WbActionManager::instance()->setEnabled(WbActionManager::SAVE_WORLD, false);
-  connect(w, &WbWorld::modificationChanged, WbActionManager::instance()->action(WbActionManager::SAVE_WORLD),
-          &QAction::setEnabled);
-  connect(w, &WbSimulationWorld::simulationStartedAfterSave, WbActionManager::instance()->action(WbActionManager::SAVE_WORLD),
+  WbActionManager::instance()->setEnabled(WbAction::SAVE_WORLD, false);
+  connect(w, &WbWorld::modificationChanged, WbActionManager::instance()->action(WbAction::SAVE_WORLD), &QAction::setEnabled);
+  connect(w, &WbSimulationWorld::simulationStartedAfterSave, WbActionManager::instance()->action(WbAction::SAVE_WORLD),
           &QAction::setEnabled);
 
   connect(mSceneTree, &WbSceneTree::valueChangedFromGui, mView3D, &WbView3D::renderLater);
@@ -809,18 +831,22 @@ void WbSimulationView::setWorld(WbSimulationWorld *w) {
   if (!WbSysInfo::environmentVariable("WEBOTS_DEBUG").isEmpty())
     connect(mSceneTree, &WbSceneTree::nodeSelected, WbVisualBoundingSphere::instance(), &WbVisualBoundingSphere::show);
 
-  connect(WbActionManager::instance()->action(WbActionManager::FRONT_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::FRONT_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::frontView);
-  connect(WbActionManager::instance()->action(WbActionManager::BACK_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::BACK_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::backView);
-  connect(WbActionManager::instance()->action(WbActionManager::LEFT_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::LEFT_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::leftView);
-  connect(WbActionManager::instance()->action(WbActionManager::RIGHT_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::RIGHT_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::rightView);
-  connect(WbActionManager::instance()->action(WbActionManager::TOP_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::TOP_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::topView);
-  connect(WbActionManager::instance()->action(WbActionManager::BOTTOM_VIEW), &QAction::triggered,
+  connect(WbActionManager::instance()->action(WbAction::BOTTOM_VIEW), &QAction::triggered,
           WbSimulationWorld::instance()->viewpoint(), &WbViewpoint::bottomView);
+
+  connect(WbVideoRecorder::instance(), &WbVideoRecorder::videoCreationStatusChanged, w, &WbWorld::updateVideoRecordingStatus);
+  w->updateVideoRecordingStatus(WbVideoRecorder::instance()->isRecording() ? WB_SUPERVISOR_MOVIE_RECORDING :
+                                                                             WB_SUPERVISOR_MOVIE_READY);
 
   mSceneTree->updateSelection();
   disableStepButton(false);
@@ -842,12 +868,12 @@ void WbSimulationView::repaintView3D() {
 
 void WbSimulationView::renderABlackScreen() {
   if (mView3D)
-    mView3D->showFastModeOverlay();
+    mView3D->showBlackRenderingOverlay();
 }
 
 void WbSimulationView::retrieveSimulationView() {
   if (mView3D)
-    mView3D->hideFastModeOverlay();
+    mView3D->hideBlackRenderingOverlay();
 }
 
 void WbSimulationView::modeKeyPressed(QKeyEvent *event) {
@@ -866,11 +892,11 @@ void WbSimulationView::modeKeyPressed(QKeyEvent *event) {
       return;
     case Qt::Key_3:
       // Ctrl + 3
-      run();
+      fast();
       return;
     case Qt::Key_4:
       // Ctrl + 4
-      fast();
+      toggleRendering();
       return;
     default:
       break;
@@ -878,7 +904,7 @@ void WbSimulationView::modeKeyPressed(QKeyEvent *event) {
 }
 
 void WbSimulationView::disableStepButton(bool disabled) {
-  WbActionManager::instance()->action(WbActionManager::STEP)->setEnabled(!disabled);
+  WbActionManager::instance()->action(WbAction::STEP)->setEnabled(!disabled);
 }
 
 void WbSimulationView::updatePlayButtons() {
@@ -886,33 +912,27 @@ void WbSimulationView::updatePlayButtons() {
 
   WbActionManager *manager = WbActionManager::instance();
 
-  QAction *pause = manager->action(WbActionManager::PAUSE);
-  QAction *realtime = manager->action(WbActionManager::REAL_TIME);
-  QAction *run = manager->action(WbActionManager::RUN);
-  QAction *fast = manager->action(WbActionManager::FAST);
+  QAction *pause = manager->action(WbAction::PAUSE);
+  QAction *realtime = manager->action(WbAction::REAL_TIME);
+  QAction *fast = manager->action(WbAction::FAST);
 
   mToolBar->removeAction(pause);
   mToolBar->removeAction(realtime);
-  mToolBar->removeAction(run);
   mToolBar->removeAction(fast);
 
   QList<QAction *> actions;
 
   switch (WbSimulationState::instance()->mode()) {
     case WbSimulationState::REALTIME:
-      actions << pause << run << fast;
-      break;
-
-    case WbSimulationState::RUN:
-      actions << realtime << pause << fast;
+      actions << pause << fast;
       break;
 
     case WbSimulationState::FAST:
-      actions << realtime << run << pause;
+      actions << realtime << pause;
       break;
 
     default:  // PAUSE
-      actions << realtime << run << fast;
+      actions << realtime << fast;
       break;
   }
 
@@ -921,10 +941,7 @@ void WbSimulationView::updatePlayButtons() {
   // setObjectName (used by the stylesheet)
   QWidget *pauseWidget = mToolBar->widgetForAction(pause);
   QWidget *realTimeWidget = mToolBar->widgetForAction(realtime);
-  QWidget *runWidget = mToolBar->widgetForAction(run);
   QWidget *fastWidget = mToolBar->widgetForAction(fast);
-  if (runWidget)
-    runWidget->setObjectName("menuButton");
   if (fastWidget)
     fastWidget->setObjectName("menuButton");
   if (realTimeWidget)
@@ -935,8 +952,11 @@ void WbSimulationView::updatePlayButtons() {
   mToolBar->update();
 
   mToolBar->setUpdatesEnabled(true);
+}
 
-  updateFastModeOverlay();
+void WbSimulationView::updateRendering() {
+  WbActionManager::instance()->updateRenderingButton();
+  updateBlackRenderingOverlay();
 }
 
 void WbSimulationView::updateSoundButtons() {
@@ -944,8 +964,8 @@ void WbSimulationView::updateSoundButtons() {
 
   WbActionManager *manager = WbActionManager::instance();
 
-  QAction *soundUnmuteAction = manager->action(WbActionManager::SOUND_UNMUTE);
-  QAction *soundMuteAction = manager->action(WbActionManager::SOUND_MUTE);
+  QAction *soundUnmuteAction = manager->action(WbAction::SOUND_UNMUTE);
+  QAction *soundMuteAction = manager->action(WbAction::SOUND_MUTE);
 
   mToolBar->removeAction(soundUnmuteAction);
   mToolBar->removeAction(soundMuteAction);

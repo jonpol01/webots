@@ -1,7 +1,8 @@
 """Test module for the titles."""
 
-import unittest
 import re
+import sys
+import unittest
 
 from books import Books
 
@@ -45,9 +46,15 @@ class TestTitles(unittest.TestCase):
         self.titles = []
         books = Books()
         for book in books.books:
+
+            # we are not responsible of the content of the discord chats
+            if book.name == 'discord':
+                continue
+
             for md_path in book.md_paths:
                 # Extract MD content.
-                with open(md_path) as f:
+                args = {} if sys.version_info[0] < 3 else {'encoding': 'utf-8'}
+                with open(md_path, **args) as f:
                     content = f.read()
 
                 # Remove annoying string sequences.
@@ -88,7 +95,8 @@ class TestTitles(unittest.TestCase):
             for w in range(len(words)):
                 word = words[w]
                 if (not word or word.startswith('wb') or word.endswith('.wbt') or word.endswith('.wbt]') or
-                        word in exceptions or numberPattern.match(word) or len(word) == 1):
+                        word in exceptions or numberPattern.match(word) or len(word) == 1 or
+                        len(re.findall(r'[^\w\s,]', word)) > 0):  # word contains some emoji
                     continue  # Exceptions.
                 if w == 0:
                     self.assertTrue(uppercasePattern.match(word), msg='%s: First word of title "%s" is not in uppercase.' %

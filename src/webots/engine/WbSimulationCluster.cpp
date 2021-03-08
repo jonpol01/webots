@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -430,7 +430,7 @@ static bool needCollisionDetection(WbSolid *solid, bool isOtherRayGeom) {
   return false;
 }
 
-void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
+void WbSimulationCluster::handleCollisionIfSpace(void *data, dGeomID o1, dGeomID o2) {
   if (dGeomIsSpace(o1) || dGeomIsSpace(o2)) {
     // colliding a mContext->space() with something
     dSpaceCollide2(o1, o2, data, odeNearCallback);
@@ -439,9 +439,10 @@ void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
       dSpaceCollide((dSpaceID)o1, data, odeNearCallback);
     if (dGeomIsSpace(o2))
       dSpaceCollide((dSpaceID)o2, data, odeNearCallback);
-    return;
   }
+}
 
+void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
   // retrieve data
   WbOdeGeomData *const odeGeomData1 = static_cast<WbOdeGeomData *>(dGeomGetData(o1));
   WbOdeGeomData *const odeGeomData2 = static_cast<WbOdeGeomData *>(dGeomGetData(o2));
@@ -457,6 +458,8 @@ void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
 
     const int pluginContacts = physicsPlugin->collide(o1, o2);
 
+    if (pluginContacts == 0)
+      handleCollisionIfSpace(data, o1, o2);
     if (pluginContacts == 2) {  // Webots will change the boundingObject color to notify collision
       if (webotsGeom1) {
         s1 = odeGeomData1->solid();
@@ -473,7 +476,11 @@ void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
       return;
     } else if (pluginContacts == 1 || !webotsGeom1 || !webotsGeom2)  // Webots won't attempt to manipulate user-defined dGeoms
       return;
-  }
+  } else
+    handleCollisionIfSpace(data, o1, o2);
+
+  if (dGeomIsSpace(o1) || dGeomIsSpace(o2))
+    return;
 
   // yvan: we are never interested in the collision between 2 ray geoms
   // (rays geoms can be either distance sensor, emitter-receiver or light sensor rays)
@@ -623,10 +630,14 @@ void WbSimulationCluster::odeNearCallback(void *data, dGeomID o1, dGeomID o2) {
   if (isRayGeom1) {
     WbDistanceSensor *const ds = dynamic_cast<WbDistanceSensor *>(s1);
     if (ds) {
+      int ix = 0;  // index of the closest contact
+      for (int i = 1; i < n; ++i)
+        if (contact[i].geom.depth < contact[ix].geom.depth)
+          ix = i;
       // Luc : contact[0].geom.g1 and contact[0].geom.g2 may not coincide with o1 and o2 in an oddly defined dCollide call-back
       // function of ODE. Should we be worried?
-      assert(o1 == contact[0].geom.g1 && o2 == contact[0].geom.g2);
-      ds->rayCollisionCallback(odeGeomData2->geometry(), o1, &contact[0].geom);
+      assert(o1 == contact[ix].geom.g1 && o2 == contact[ix].geom.g2);
+      ds->rayCollisionCallback(odeGeomData2->geometry(), o1, &contact[ix].geom);
       return;
     }
 

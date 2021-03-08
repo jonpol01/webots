@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,23 +18,27 @@
 #include <webots/InertialUnit.hpp>
 #include "RosSensor.hpp"
 
+#include <webots_ros/get_float_array.h>
+
 using namespace webots;
 
 class RosInertialUnit : public RosSensor {
 public:
   RosInertialUnit(InertialUnit *inertialUnit, Ros *ros);
-  virtual ~RosInertialUnit() { cleanup(); }
+  virtual ~RosInertialUnit();
 
   ros::Publisher createPublisher() override;
   void publishValue(ros::Publisher publisher) override;
   void rosEnable(int samplingPeriod) override { mInertialUnit->enable(samplingPeriod); }
   void rosDisable() override { cleanup(); }
   int rosSamplingPeriod() override { return mInertialUnit->getSamplingPeriod(); }
+  bool getNoise(webots_ros::get_float::Request &req, webots_ros::get_float::Response &res);
 
 private:
   void cleanup() { mInertialUnit->disable(); }
 
   InertialUnit *mInertialUnit;
+  ros::ServiceServer mNoiseServer;
 };
 
 #endif  // ROS_INERTIAL_UNIT_HPP

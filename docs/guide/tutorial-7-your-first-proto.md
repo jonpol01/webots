@@ -35,7 +35,7 @@ Finally, save the PROTO file.
   ]
   {
     Robot {
-      ...
+      # list of fields
     }
   }
 ```
@@ -90,14 +90,14 @@ PROTO FourWheelsRobot [
     translation IS translation
     rotation IS rotation
     children [
-      ...
+      # list of children nodes
     ]
     boundingObject USE BODY
     physics Physics {
       density -1
       mass IS bodyMass
     }
-    controller "4_wheels_collision_avoidance"
+    controller "four_wheels_collision_avoidance"
   }
 }
 ```
@@ -108,7 +108,7 @@ The same mechanism could also be used to expose the `controller` field of the [R
 
 ### Solution: PROTO File
 
-To compare your PROTO file with [the solution](https://github.com/cyberbotics/webots/blob/master/projects/samples/tutorials/protos/FourWheelsRobot.proto), go to your files and find the folder named "my\_first\_simulation" created in [Tutorial 1](tutorial-1-your-first-simulation-in-webots.md), then go to the "protos" folder and open with a text editor the right PROTO.
+To compare your PROTO file with [the solution]({{ url.github_tree }}/projects/samples/tutorials/protos/FourWheelsRobot.proto), go to your files and find the folder named "my\_first\_simulation" created in [Tutorial 1](tutorial-1-your-first-simulation-in-webots.md), then go to the "protos" folder and open with a text editor the right PROTO.
 
 ### Conclusion
 

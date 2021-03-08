@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
 #include <QtCore/QDirIterator>
+#include <QtCore/QElapsedTimer>
 
 #include <cassert>
 
@@ -237,16 +238,7 @@ bool WbApplication::cancelWorldLoading(bool loadEmptyWorld, bool deleteWorld) {
   return false;
 }
 
-bool WbApplication::loadWorld(QString worldName, bool reloading) {
-  delete mWorldLoadTimer;
-  mWorldLoadTimer = NULL;
-  if (qgetenv("WEBOTS_DISABLE_WORLD_LOADING_DIALOG").isEmpty()) {
-    mWorldLoadTimer = new QTime();
-    mWorldLoadTimer->start();
-  }
-  mWorldLoadingCanceled = false;
-  mWorldLoadingProgressDialogCreated = false;
-
+bool WbApplication::isValidWorldFileName(const QString &worldName) {
   QFileInfo worldNameInfo(worldName);
   if (!worldNameInfo.exists() || !worldNameInfo.isFile() || !worldNameInfo.isReadable()) {
     WbLog::error(tr("Could not open file: '%1'.").arg(worldName));
@@ -256,6 +248,18 @@ bool WbApplication::loadWorld(QString worldName, bool reloading) {
     WbLog::error(tr("Could not open file: '%1'. The world file extension must be '.wbt'.").arg(worldName));
     return false;
   }
+  return true;
+}
+
+bool WbApplication::loadWorld(QString worldName, bool reloading) {
+  delete mWorldLoadTimer;
+  mWorldLoadTimer = NULL;
+  if (qgetenv("WEBOTS_DISABLE_WORLD_LOADING_DIALOG").isEmpty()) {
+    mWorldLoadTimer = new QElapsedTimer();
+    mWorldLoadTimer->start();
+  }
+  mWorldLoadingCanceled = false;
+  mWorldLoadingProgressDialogCreated = false;
 
   WbNodeOperations::instance()->enableSolidNameClashCheckOnNodeRegeneration(false);
 
@@ -368,8 +372,9 @@ void WbApplication::worldReload() {
   emit worldReloadRequested();
 }
 
-void WbApplication::simulationReset() {
-  emit simulationResetRequested();
+void WbApplication::simulationReset(bool restartControllers) {
+  WbWorld::instance()->reset(restartControllers);
+  emit simulationResetRequested(restartControllers);
 }
 
 void WbApplication::startVideoCapture(const QString &fileName, int type, int width, int height, int quality, int acceleration,

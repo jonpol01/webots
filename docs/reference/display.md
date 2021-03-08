@@ -14,9 +14,11 @@ Display {
 The [Display](#display) node allows to handle a 2D pixel array using simple API functions, and render it into a 2D overlay on the 3D view, into a 2D texture of any [Shape](shape.md) node, or both.
 It can model an embedded screen or it can display any graphical information such as graphs, text, robot trajectory, filtered camera images and so on.
 
-If the first child of the [Display](#display) node is or contains (recursive search if the first node is a [Group](group.md)) a [Shape](shape.md) node having a [ImageTexture](imagetexture.md), then the internal texture of the(se) [ImageTexture](imagetexture.md) node(s) is replaced by the texture of the [Display](#display).
-In this case, the `Shape.appearance` field should contain an [Appearance](appearance.md) node (rather than a [PBRAppearance](pbrappearance.md) node).
-It is necessary to set the `filtering` field of the(se) [ImageTexture](imagetexture.md) node(s) to 0 in order to prevent issues when distancing oneself from the display.
+To model an embedded screen, the first child of the [Display](#display) node should be or contain (recursive search if the first node is a [Group](group.md)) a [Shape](shape.md) node having an appearance and an [ImageTexture](imagetexture.md) node, then the internal texture of the [ImageTexture](imagetexture.md) node is replaced by the texture of the [Display](#display).
+Both [Appearance](appearance.md) and [PBRAppearance](pbrappearance.md) nodes are supported.
+In case of [PBRAppearance](pbrappearance.md) node, at least `PBRAppearance.baseColorMap` or `PBRAppearance.emissiveColorMap` [ImageTexture](imagetexture.md) node should be defined. If both are defined, then both textures will be internally replaced by the [Display](#display) texture.
+Using the [Appearance](appearance.md) node and setting the [Material](material.md).emissiveColor field to `1 1 1` helps preserving the original colors of the loaded [Display](#display) texture.
+Additionally, it is necessary to set the `filtering` field of the [ImageTexture](imagetexture.md) nodes to 0 in order to prevent issues when distancing oneself from the display.
 
 ### Field Summary
 
@@ -53,6 +55,7 @@ For example, in order to draw two red lines, the `wb_display_set_color` contextu
 The display image is shown by default on top of the 3D window with a cyan border, see [this figure](#display-overlay-image).
 The user can move this display image at the desired position using the mouse drag and drop and resize it by clicking on the icon at the bottom right corner.
 Additionally a close button is available on the top right corner to hide the image.
+If the mouse cursor is over the overlay image and the simulation is paused, the RGBA value of the selected pixel is displayed in the status bar at the bottom of the Webots window.
 Once the robot is selected, it is also possible to show or hide the overlay image from the `Display Devices` item in `Robot` menu.
 
 It is also possible to show the display image in an external window by double-clicking on it.
@@ -64,7 +67,7 @@ Then, after closing the window, the overlay will be automatically restored.
 #### `wb_display_get_width`
 #### `wb_display_get_height`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -152,7 +155,7 @@ These functions return respectively the values of the `width` and `height` field
 #### `wb_display_set_opacity`
 #### `wb_display_set_font`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -297,7 +300,7 @@ For example the vector `[1 0 1]` represents the magenta color.
 #### `wb_display_attach_camera`
 #### `wb_display_detach_camera`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -395,7 +398,7 @@ After detaching a camera, the pixels that have not been manually drawn will be t
 #### `wb_display_fill_oval`
 #### `wb_display_fill_polygon`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -563,7 +566,7 @@ The `wb_display_fill_polygon` function draws a polygon having the same propertie
 #### `wb_display_image_save`
 #### `wb_display_image_delete`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -574,6 +577,7 @@ The `wb_display_fill_polygon` function draws a polygon having the same propertie
 #define WB_IMAGE_RGBA 4
 #define WB_IMAGE_ARGB 5
 #define WB_IMAGE_BGRA 6
+#define WB_IMAGE_ABGR 7
 
 typedef struct WbImageStructPrivate *WbImageRef;
 
@@ -599,7 +603,7 @@ namespace webots {
   };
 
   class Display : public Device
-    enum {RGB, RGBA, ARGB, BGRA};
+    enum {RGB, RGBA, ARGB, BGRA, ABGR};
 
     ImageRef *imageNew(int width, int height, const void *data, int format) const;
     ImageRef *imageLoad(const std::string &filename) const;
@@ -623,7 +627,7 @@ class ImageRef:
     # ...
 
 class Display (Device):
-    RGB, RGBA, ARGB, BGRA
+    RGB, RGBA, ARGB, BGRA, ABGR
 
     def imageNew(self, data, format, width=None, height=None):
     def imageLoad(self, filename):
@@ -647,7 +651,7 @@ public class ImageRef {
 }
 
 public class Display extends Device {
-  public final static int RGB, RGBA, ARGB, BGRA;
+  public final static int RGB, RGBA, ARGB, BGRA, ABGR;
 
   public ImageRef imageNew(int width, int height, int[] data, int format);
   public ImageRef imageLoad(String filename);
@@ -664,7 +668,7 @@ public class Display extends Device {
 %tab "MATLAB"
 
 ```MATLAB
-RGB, RGBA, ARGB, BGRA
+RGB, RGBA, ARGB, BGRA, ABGR
 
 image = wb_display_image_new(tag, data, format)
 image = wb_display_image_load(tag, 'filename')
@@ -703,8 +707,7 @@ They should be deleted with the `wb_display_image_delete` function when they are
 Finally, note that both the main display image and the clipboard images have an alpha channel.
 
 The `wb_display_image_new` function creates a new clipboard image, with the specified `with` and `height`, and loads the image `data` into it with respect to the defined image `format`.
-Three images format are supported: `WB_IMAGE_RGBA` which is similar to the image format returned by a `Camera` device and `WB_IMAGE_RGB` or `WB_IMAGE_ARGB`.
-`WB_IMAGE_RGBA` and `WB_IMAGE_ARGB` are including an alpha channel respectively after and before the color components.
+Five images format are supported: `WB_IMAGE_BGRA` which is the recommended one and the image format returned by a `Camera` device, `WB_IMAGE_RGB`, `WB_IMAGE_RGBA`, `WB_IMAGE_ARGB`,  and `WB_IMAGE_ABGR`.
 
 The `wb_display_image_load` function creates a new clipboard image, loads an image file into it and returns a reference to the new clipboard image.
 The image file is specified with the `filename` parameter (relatively to the controller directory).
@@ -731,4 +734,148 @@ The `wb_display_image_delete` function releases the memory used by a clipboard i
 After this call the value of `ir` becomes invalid and should not be used any more.
 Using this function is recommended after a clipboard image is not needed any more.
 
-> **Note** [Java]: The `Display.imageNew` function can display the image returned by the `Camera.getImage` function directly if the pixel format argument is set to ARGB.
+The following controller snippet shows how to copy a [Camera](camera.md) image to the main display image.
+This is particularly useful if you need to modify the [Camera](camera.md) image before copying it to the main display image, otherwise you should use the [`wb_display_attach_camera`](#wb_display_attach_camera) function that provides a better performance.
+
+%tab-component "language"
+%tab "C"
+```c
+#include <webots/robot.h>
+#include <webots/camera.h>
+#include <webots/display.h>
+
+int main() {
+  wb_robot_init();
+
+  const int time_step = wb_robot_get_basic_time_step();
+  WbDeviceTag camera = wb_robot_get_device("camera");
+  wb_camera_enable(camera, time_step);
+  const int width = wb_camera_get_width(camera);
+  const int height = wb_camera_get_height(camera);
+  WbDeviceTag display = wb_robot_get_device("display");
+
+  while(wb_robot_step(time_step) != -1) {
+    const unsigned char *data = wb_camera_get_image(camera);
+    if (data) {
+      WbImageRef ir = wb_display_image_new(display, width, height, data, WB_IMAGE_ARGB);
+      wb_display_image_paste(display, ir, 0, 0, false);
+      wb_display_image_delete(display, ir);
+    }
+  }
+
+  wb_robot_cleanup();
+  return 0;
+}
+```
+%tab-end
+
+%tab "C++"
+```cpp
+#include <webots/Robot.hpp>
+#include <webots/Camera.hpp>
+#include <webots/Display.hpp>
+
+using namespace webots;
+
+int main() {
+  Robot *robot = new Robot();
+  const int timeStep = robot->getBasicTimeStep();
+
+  Camera *camera = robot->getCamera("camera");
+  camera->enable(timeStep);
+  const int width = camera->getWidth();
+  const int height = camera->getHeight();
+  Display *display = robot->getDisplay("display");
+
+  while (robot->step(timeStep) != -1) {
+    const unsigned char *data = camera->getImage();
+    if (data) {
+      ImageRef *ir = display->imageNew(width, height, data, Display::ARGB);
+      display->imagePaste(ir, 0, 0, false);
+      display->imageDelete(ir);
+    }
+  }
+
+  delete robot;
+  return 0;
+}
+```
+%tab-end
+
+%tab "Python"
+```python
+from controller import Robot, Camera, Display
+
+robot = Robot()
+timestep = int(robot.getBasicTimeStep())
+
+camera = robot.getCamera('camera')
+camera.enable(timestep)
+width = camera.getWidth()
+height = camera.getHeight()
+display = robot.getDisplay('display');
+
+while robot.step(32) != -1:
+    data = camera.getImage()
+    if data:
+        ir = display.imageNew(data, Display.ARGB, width, height)
+        display.imagePaste(ir, 0, 0, False)
+        display.imageDelete(ir)
+```
+%tab-end
+
+%tab "Java"
+```java
+import com.cyberbotics.webots.controller.Robot;
+import com.cyberbotics.webots.controller.Camera;
+import com.cyberbotics.webots.controller.Display;
+import com.cyberbotics.webots.controller.ImageRef;
+
+public class ShowCameraInDisplay {
+
+  public static void main(String[] args) {
+
+    final Robot robot = new Robot();
+    int timeStep = (int) Math.round(robot.getBasicTimeStep());
+
+    Camera camera = robot.getCamera("camera");
+    camera.enable(timeStep);
+    int width = camera.getWidth();
+    int height = camera.getHeight();
+    Display display = robot.getDisplay("display");
+
+    while (robot.step(32) != -1) {
+      int[] data = camera.getImage();
+      if (data != null) {
+        ImageRef ir = display.imageNew(width, height, data, Display.ARGB);
+        display.imagePaste(ir, 0, 0, false);
+        display.imageDelete(ir);
+      }
+    }
+  }
+}
+```
+%tab-end
+
+%tab "MATLAB"
+```MATLAB
+time_step = wb_robot_get_basic_time_step();
+camera = wb_robot_get_device("camera");
+wb_camera_enable(camera, time_step);
+width = wb_camera_get_width(camera);
+height = wb_camera_get_height(camera);
+display = wb_robot_get_device("display");
+
+while wb_robot_step(time_step) ~= -1
+  data = wb_camera_get_image(camera);
+  if data
+    ir = wb_display_image_new(display, width, height, data, ARGB);
+    wb_display_image_paste(display, ir, 0, 0, false);
+    wb_display_image_delete(display, ir);
+  end
+end
+```
+%tab-end
+%end
+
+> **Note**: The `wb_display_image_new` function can display the image returned by the [`wb_camera_get_image`](camera.md#wb_camera_get_image) function directly if the pixel format argument is set to ARGB.

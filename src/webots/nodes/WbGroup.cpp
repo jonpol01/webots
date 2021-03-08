@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 #include "WbGroup.hpp"
 
+#include "WbBasicJoint.hpp"
 #include "WbBoundingSphere.hpp"
 #include "WbGeometry.hpp"
 #include "WbOdeContext.hpp"
@@ -85,36 +86,40 @@ void WbGroup::postFinalize() {
   connect(mChildren, &WbMFNode::changed, this, &WbGroup::childrenChanged);
   connect(mChildren, &WbMFNode::itemInserted, this, &WbGroup::insertChildPrivate);
   // if parent is a slot, it needs to be notified when a new node is inserted
-  WbSlot *ps = dynamic_cast<WbSlot *>(parent());
+  WbSlot *ps = dynamic_cast<WbSlot *>(parentNode());
   if (ps)
     connect(this, &WbGroup::notifyParentSlot, ps, &WbSlot::endPointInserted);
+  // if parent is a joint, it needs to be notified when a new node is inserted
+  const WbBasicJoint *pj = dynamic_cast<WbBasicJoint *>(parentNode());
+  if (pj)
+    connect(this, &WbGroup::notifyParentJoint, pj, &WbBasicJoint::endPointChanged);
 
-  const WbGroup *const parentNode = dynamic_cast<const WbGroup *const>(parent());
-  if (parentNode && parentNode->mHasNoSolidAncestor) {
+  const WbGroup *const parent = dynamic_cast<const WbGroup *const>(parentNode());
+  if (parent && parent->mHasNoSolidAncestor) {
     connect(mChildren, &WbMFNode::changed, this, &WbGroup::topLevelListsUpdateRequested);
-    connect(this, &WbGroup::topLevelListsUpdateRequested, parentNode, &WbGroup::topLevelListsUpdateRequested);
+    connect(this, &WbGroup::topLevelListsUpdateRequested, parent, &WbGroup::topLevelListsUpdateRequested);
   } else if (mHasNoSolidAncestor)
     connect(mChildren, &WbMFNode::changed, this, &WbGroup::topLevelListsUpdateRequested);
 }
 
 void WbGroup::insertChild(int index, WbNode *child) {
-  child->setParent(this);
+  child->setParentNode(this);
   mChildren->insertItem(index, child);
 }
 
 void WbGroup::setChild(int index, WbNode *child) {
-  child->setParent(this);
+  child->setParentNode(this);
   mChildren->setItem(index, child);
 }
 
 void WbGroup::addChild(WbNode *child) {
-  child->setParent(this);
+  child->setParentNode(this);
   mChildren->addItem(child);
 }
 
 bool WbGroup::removeChild(WbNode *node) {
   if (mChildren->removeNode(node)) {
-    node->setParent(NULL);
+    node->setParentNode(NULL);
     return true;
   } else
     return false;
@@ -124,7 +129,7 @@ void WbGroup::clear() {
   WbMFNode::Iterator it(*mChildren);
   while (it.hasNext()) {
     WbNode *const n = it.next();
-    n->setParent(NULL);
+    n->setParentNode(NULL);
   }
   mChildren->clear();
 }
@@ -227,17 +232,22 @@ bool WbGroup::isAValidBoundingObject(bool checkOde, bool warning) const {
 }
 
 void WbGroup::descendantNodeInserted(WbBaseNode *decendant) {
-  if (parent()) {
-    WbGroup *pg = dynamic_cast<WbGroup *>(parent());
-    WbSlot *ps = dynamic_cast<WbSlot *>(parent());
-    if (pg)
-      pg->descendantNodeInserted(decendant);
-    if (ps)
-      emit notifyParentSlot(decendant);
+  if (!parentNode())
+    return;
+
+  WbGroup *pg = dynamic_cast<WbGroup *>(parentNode());
+  if (pg) {
+    pg->descendantNodeInserted(decendant);
+    return;
   }
+
+  if (dynamic_cast<WbBasicJoint *>(parentNode()))
+    emit notifyParentJoint(decendant);
+  else if (dynamic_cast<WbSlot *>(parentNode()))
+    emit notifyParentSlot(decendant);
 }
 
-void WbGroup::insertChildFromSlot(WbBaseNode *decendant) {
+void WbGroup::insertChildFromSlotOrJoint(WbBaseNode *decendant) {
   descendantNodeInserted(decendant);
   emit childAdded(decendant);
 }

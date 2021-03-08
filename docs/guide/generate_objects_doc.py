@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright 1996-2019 Cyberbotics Ltd.
+# Copyright 1996-2021 Cyberbotics Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import sys
 
 from io import open
 
-# https://github.com/rcompton/ryancompton.net/blob/master/assets/praw_drugs/urlmarker.py
+# https://github.com/rcompton/ryancompton.net/blob/released/assets/praw_drugs/urlmarker.py
 WEB_URL_REGEX = \
     r'(?i)\b((?:https?:(?:/{1,3}|[a-z0-9%])|[a-z0-9.\-]+[.](?:com|net|org|edu|gov|mil|aero|asia|biz|cat|coop|info|' \
     r'int|jobs|mobi|museum|name|post|pro|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|' \
@@ -77,6 +77,12 @@ for proto in fileList:
         prioritaryProtoList.append(proto)
         fileList.remove(proto)
 
+# get list of base nodes
+baseNodeList = []
+for rootPath, dirNames, fileNames in os.walk(os.path.join(os.environ['WEBOTS_HOME'], 'resources', 'nodes')):
+    for fileName in fnmatch.filter(fileNames, '*.wrl'):
+        baseNodeList.append(os.path.splitext(fileName)[0])
+
 # loop through all PROTO files
 for proto in prioritaryProtoList + fileList:
     protoName = os.path.basename(proto).split('.')[0]
@@ -91,6 +97,7 @@ for proto in prioritaryProtoList + fileList:
     fields = u''
     state = 0
     describedField = []
+    fieldEnumeration = {}
     skipProto = False
     # parse the PROTO file
     with open(proto, 'r') as file:
@@ -115,6 +122,16 @@ for proto in prioritaryProtoList + fileList:
                 for url in urls:
                     newLine = newLine.replace(url, '[%s](%s)' % (url, url))
                 description += newLine + '\n'
+        if skipProto:
+            imagePath = 'images/objects/%s/%s/model.png' % (category, protoName)
+            if upperCategory == 'projects':
+                imagePath = 'images/%s/%s.png' % (category, protoName)
+            if os.path.exists(imagePath):
+                os.remove(imagePath)
+            thumbnailPath = imagePath.replace('.png', '.thumbnail.png')
+            if os.path.exists(thumbnailPath):
+                os.remove(thumbnailPath)
+            continue
         # fields
         matches = re.finditer(r'\[\n((.*\n)*)\]', content, re.MULTILINE)
         for i, match in enumerate(matches):
@@ -124,6 +141,7 @@ for proto in prioritaryProtoList + fileList:
         matches = re.finditer(r'.*ield\s+([^ ]*?)(\{(?:[^\[\n]*\,?\s?)(?<!(\{))\})\s+([^ ]*)\s+([^#\n]*)(#?)(.*)',
                               fieldsDefinition, re.MULTILINE)
         for i, match in enumerate(matches):
+            fieldEnumeration[match.group(4)] = match.group(2)[1:-1].split(',')  # keep the list of possibilities
             if '\n' in match.group():
                 string = ' ' * match.group().index(match.group(2))
                 fieldsDefinition = fieldsDefinition.replace(string + match.group(4), match.group(4))
@@ -132,23 +150,41 @@ for proto in prioritaryProtoList + fileList:
                 fieldsDefinition = fieldsDefinition.replace(match.group(2), ' ' * len(match.group(2)))
             else:
                 fieldsDefinition = fieldsDefinition.replace(match.group(2), '')
-            # we can evetually use the list of possibility in the future
-        matches = re.finditer(r'^\s*([^#]*ield)\s+([^ \{]*)\s+([^ ]*)\s+([^#\n]*)(#?)(.*)((\n*(    |  \]).*)*)',
+        # count minimum space number between field type and name
+        matches = re.finditer(r'.*ield\s+([^ ]*?)(\s+)([^ ]*)\s+([^#\n]*)(#?)(.*)',
+                              fieldsDefinition, re.MULTILINE)
+        minSpaces = 2000
+        for i, match in enumerate(matches):
+            spaces = match.group(2)
+            if len(spaces) < minSpaces:
+                minSpaces = len(spaces)
+        spacesToRemove = max(minSpaces - 2, 0)
+        # create the final cleaned PROTO header
+        matches = re.finditer(r'^\s*(.*?ield)\s+([^ \{]*)(\s+)([^ ]*)\s+([^#\n]*)(#?)(.*)((\n*(    |  \]).*)*)',
                               fieldsDefinition, re.MULTILINE)
         for i, match in enumerate(matches):
-            if match.group(1) != 'hiddenField':
+            if match.group(1) not in ['hiddenField', 'deprecatedField']:
                 fieldType = match.group(2)
-                fieldName = match.group(3)
-                fieldDefaultValue = match.group(4)
-                fieldComment = match.group(6).strip()
+                spaces = match.group(3)
+                fieldName = match.group(4)
+                fieldDefaultValue = match.group(5)
+                fieldComment = match.group(7).strip()
                 # skip 'Is `NodeType.fieldName`.' descriptions
                 if fieldComment and not re.match(r'Is\s`([a-zA-Z]*).([a-zA-Z]*)`.', fieldComment):
-                    describedField.append((fieldName, fieldComment))
-                fields += re.sub(r'^\s*.*field\s', '  ', re.sub(r'\s*(#.*)', '', match.group(), 0, re.MULTILINE),
-                                 0, re.MULTILINE) + '\n'
-
-    if skipProto:
-        continue
+                    # add link to base nodes:
+                    for baseNode in baseNodeList:
+                        link = ' [' + baseNode + '](../reference/' + baseNode.lower() + '.md)'
+                        fieldComment = fieldComment.replace(' ' + baseNode, link)
+                    describedField.append([fieldType, fieldName, fieldComment])
+                # remove the comment
+                fieldString = match.group()
+                fieldString = re.sub(r'\s*(#.*)', '', match.group(), 0, re.MULTILINE)
+                # remove intial '*field' string
+                fieldString = re.sub(r'^\s*.*field\s', '  ', fieldString, 0, re.MULTILINE)
+                # remove unwanted spaces between field type and field name (if needed)
+                if spacesToRemove > 0:
+                    fieldString = fieldString.replace(fieldType + ' ' * spacesToRemove, fieldType)
+                fields += fieldString + '\n'
 
     baseType = ''
     # use the cache file to get the baseType
@@ -188,7 +224,7 @@ for proto in prioritaryProtoList + fileList:
         file.write(description + '\n')
 
         imagePath = 'images/objects/%s/%s/model.png' % (category, protoName)
-        if upperCategory == 'projects':
+        if upperCategory == 'projects':  # appearances
             imagePath = 'images/%s/%s.png' % (category, protoName)
         thumbnailPath = imagePath.replace('.png', '.thumbnail.png')
         if os.path.isfile(thumbnailPath):
@@ -198,7 +234,35 @@ for proto in prioritaryProtoList + fileList:
             file.write(u'![%s](%s)\n\n' % (protoName, imagePath))
             file.write(u'%end\n\n')
         else:
-            sys.stderr.write('Please add a "%s" file.\n' % imagePath)
+            # maybe multiple images
+            if os.path.exists(os.path.dirname(imagePath)):
+                availableImages = [os.path.dirname(imagePath) + '/' + f for f in os.listdir(os.path.dirname(imagePath))]
+                regex = imagePath.replace('.png', '_..png')
+                files = []
+                for image in availableImages:
+                    if re.match(regex, image):
+                        thumbnailPath = image.replace('.png', '.thumbnail.png')
+                        if os.path.isfile(thumbnailPath):
+                            image = thumbnailPath
+                        files.append(image)
+                if files:
+                    files.sort()  # alphabetically ordered
+                    file.write(u'%figure\n\n')
+                    file.write(u'|     |     |\n')
+                    file.write(u'|:---:|:---:|\n')
+                    for i in range(len(files)):
+                        image = os.path.basename(files[i]).replace('.thumbnail.png', '.png')
+                        if i % 2 == 0:
+                            file.write(u'| ![%s](%s) |' % (image, files[i]))
+                        else:
+                            file.write(u'![%s](%s) |\n' % (image, files[i]))
+                    if not len(files) % 2 == 0:
+                        file.write(u' |\n')
+                    file.write(u'\n%end\n\n')
+                else:
+                    sys.stderr.write('Please add a "%s" file.\n' % imagePath)
+            else:
+                sys.stderr.write('Please add a "%s" file.\n' % imagePath)
 
         if baseType:
             file.write(u'Derived from [%s](../reference/%s.md).\n\n' % (baseType, baseType.lower()))
@@ -209,7 +273,7 @@ for proto in prioritaryProtoList + fileList:
         file.write(u'}\n')
         file.write(u'```\n\n')
         location = proto.replace(os.environ['WEBOTS_HOME'], '').replace(os.sep, '/')
-        file.write(u'> **File location**: "[WEBOTS\\_HOME%s](https://github.com/cyberbotics/webots/tree/master%s)"\n\n' %
+        file.write(u'> **File location**: "[WEBOTS\\_HOME%s]({{ url.github_tree }}%s)"\n\n' %
                    (location.replace('_', '\\_'), location))
         if license:
             file.write(u'> **License**: %s\n' % license)
@@ -221,8 +285,30 @@ for proto in prioritaryProtoList + fileList:
 
         if describedField:
             file.write(headerPrefix + u'## %s Field Summary\n\n' % protoName)
-            for fieldName, fieldDescription in describedField:
-                file.write(u'- `%s`: %s\n\n' % (fieldName, fieldDescription))
+            for fieldType, fieldName, fieldDescription in describedField:
+                file.write(u'- `%s`: %s' % (fieldName, fieldDescription))
+                isMFField = fieldType.startswith('MF')
+                if fieldName in fieldEnumeration:
+                    values = fieldEnumeration[fieldName]
+                    if isMFField:
+                        file.write(u' This field accepts a list of ')
+                    else:
+                        if len(values) > 1:
+                            file.write(u' This field accepts the following values: ')
+                        else:
+                            file.write(u' This field accepts the following value: ')
+                    for i in range(len(values)):
+                        value = values[i].split('{')[0]  # In case of node keep only the type
+                        if i == len(values) - 1:
+                            if isMFField:
+                                file.write(u'`%s` %s.' % (value.strip(), fieldType.replace('MF', '').lower() + 's'))
+                            else:
+                                file.write(u'`%s`.' % value.strip())
+                        elif i == len(values) - 2:
+                            file.write(u'`%s`, and ' % value.strip())
+                        else:
+                            file.write(u'`%s`, ' % value.strip())
+                file.write(u'\n\n')
 
     if upperCategory not in upperCategories:
         upperCategories[upperCategory] = []

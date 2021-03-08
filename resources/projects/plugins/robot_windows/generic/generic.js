@@ -23,7 +23,7 @@ var supportedDeviceTypes = [
 ];
 
 function menuTabCallback(deviceType) {
-  var i, x, tablinks;
+  let i, x, tablinks;
   x = document.getElementsByClassName('devices-container');
   for (i = 0; i < x.length; ++i)
     x[i].style.display = 'none';
@@ -62,6 +62,26 @@ function checkboxCallback(checkbox) {
   touchedCheckboxes.push(checkbox);
 }
 
+function cameraRecognitionCheckboxCallback(checkbox) {
+  const deviceName = checkbox.getAttribute('device');
+  if (checkbox.checked)
+    commands.push(deviceName + ':recognitionEnable');
+  else
+    commands.push(deviceName + ':recognitionDisable');
+  const segmentationCheckbox = document.getElementById(deviceName + '-segmentation-checkbox');
+  if (segmentationCheckbox)
+    segmentationCheckbox.disabled = !checkbox.checked;
+  touchedCheckboxes.push(checkbox);
+}
+
+function cameraSegmentationCheckboxCallback(checkbox) {
+  if (checkbox.checked)
+    commands.push(checkbox.getAttribute('device') + ':segmentationEnable');
+  else
+    commands.push(checkbox.getAttribute('device') + ':segmentationDisable');
+  touchedCheckboxes.push(checkbox);
+}
+
 function pointCloudCheckboxCallback(checkbox) {
   if (checkbox.checked)
     commands.push(checkbox.getAttribute('device') + ':pointCloudEnable');
@@ -71,7 +91,7 @@ function pointCloudCheckboxCallback(checkbox) {
 }
 
 function comboboxCallback(combobox) {
-  var devicePlots = widgets[combobox.getAttribute('device')];
+  const devicePlots = widgets[combobox.getAttribute('device')];
   devicePlots.forEach(function(widget) {
     widget.show(false);
   });
@@ -101,14 +121,17 @@ function differentialWheelsResetSpeedTag(_tag) {
 }
 
 function appendNewElement(id, newElement) {
-  var tmp = document.createElement('tmp');
+  const tmp = document.createElement('tmp');
   tmp.innerHTML = newElement;
-  var container = document.getElementById(id);
+  const container = document.getElementById(id);
   container.appendChild(tmp.firstChild);
   return container.childNodes[container.childNodes.length - 1];
 }
 
 function addDeviceType(type) {
+  if (document.getElementById(type))
+    return; // check if already exists
+
   appendNewElement('content',
     '<div id="' + type + '" class="devices-container animate-left">' +
       '<h1>' + type + '</h1>' +
@@ -121,18 +144,37 @@ function addDeviceType(type) {
 }
 
 function addDevice(device) {
-  var div = '<div id="' + device.name + '" class="device">';
+  if (document.getElementById(device.htmlName))
+    return; // check if already exists
+
+  let div = '<div id="' + device.htmlName + '" class="device">';
   div += '<h2>';
   if (device.type !== 'RotationalMotor' && device.type !== 'LinearMotor' && device.type !== 'DifferentialWheels')
-    div += '<input type="checkbox" title="Enable/disable this device." id="' + device.name + '-enable-checkbox" device="' + device.name + '" onclick="checkboxCallback(this)" />';
-  div += device.name + '<span id="' + device.name + '-label"></span></h2>';
-  if (device.type === 'Lidar') {
-    div += '<h2 class="point-cloud-enable-label">';
-    div += '<input type="checkbox" title="Enable/disable the lidar point cloud." id="' + device.name + '-cloud-point-checkbox" device="' + device.name + '" onclick="pointCloudCheckboxCallback(this)"/>';
+    div += '<input type="checkbox" title="Enable/disable this device." id="' + device.htmlName + '-enable-checkbox" device="' + device.htmlName + '" onclick="checkboxCallback(this)" />';
+  div += device.htmlName + '<span id="' + device.htmlName + '-label"></span></h2>';
+  if (device.type === 'Camera' && device.recognition === 1) {
+    if (device.segmentation === 1) {
+      div += '<div class="device-option-enable-label">';
+      div += '<h2 class="device-option-item-enable-label">';
+    } else
+      div += '<h2 class="device-option-enable-label">';
+    div += '<input type="checkbox" title="Enable/disable the recognition functionality." id="' + device.htmlName + '-recognition-checkbox" device="' + device.htmlName + '" onclick="cameraRecognitionCheckboxCallback(this)"/>';
+    div += '<span>Recognition</span>';
+    div += '</h2>';
+    if (device.segmentation === 1) {
+      div += '<h2 class="device-option-item-enable-label">';
+      div += '<input type="checkbox" title="Enable/disable the segmentation functionality." id="' + device.htmlName + '-segmentation-checkbox" device="' + device.htmlName + '" onclick="cameraSegmentationCheckboxCallback(this)" disabled/>';
+      div += '<span>Segmentation</span>';
+      div += '</h2>';
+      div += '</div>';
+    }
+  } else if (device.type === 'Lidar') {
+    div += '<h2 class="device-option-enable-label">';
+    div += '<input type="checkbox" title="Enable/disable the lidar point cloud." id="' + device.htmlName + '-cloud-point-checkbox" device="' + device.htmlName + '" onclick="pointCloudCheckboxCallback(this)"/>';
     div += '<span>Point Cloud</span>';
     div += '</h2>';
   }
-  div += '<div id="' + device.name + '-content" class="device-content"/>';
+  div += '<div id="' + device.htmlName + '-content" class="device-content"/>';
   div += '</div>';
 
   appendNewElement(device.type + '-layout', div);
@@ -150,7 +192,7 @@ function addDevice(device) {
   else if (device.type === 'GPS')
     createGeneric3DDevice(device, TimeplotWidget.prototype.AutoRangeType.STRETCH, -1.0, 1.0, '[m]');
   else if (device.type === 'Gyro')
-    createGeneric3DDevice(device, TimeplotWidget.prototype.AutoRangeType.STRETCH, -20.0, 20.0, '[rad/m^2]');
+    createGeneric3DDevice(device, TimeplotWidget.prototype.AutoRangeType.STRETCH, -20.0, 20.0, '[rad/s]');
   else if (device.type === 'InertialUnit')
     createGeneric3DDevice(device, TimeplotWidget.prototype.AutoRangeType.NONE, -Math.PI, Math.PI, '[rad]');
   else if (device.type === 'Lidar')
@@ -164,9 +206,9 @@ function addDevice(device) {
   else if (device.type === 'RangeFinder')
     createGenericImageDevice(device);
   else if (device.type === 'RotationalMotor' || device.type === 'LinearMotor') {
-    var minPosition = device.minPosition;
-    var maxPosition = device.maxPosition;
-    var autoRange = TimeplotWidget.prototype.AutoRangeType.NONE;
+    let minPosition = device.minPosition;
+    let maxPosition = device.maxPosition;
+    let autoRange = TimeplotWidget.prototype.AutoRangeType.NONE;
     if (minPosition === 0.0 && maxPosition === 0.0) {
       minPosition = device.type === 'RotationalMotor' ? -Math.PI : -1.0;
       maxPosition = device.type === 'RotationalMotor' ? Math.PI : 1.0;
@@ -184,31 +226,31 @@ function addDevice(device) {
 }
 
 function createGenericImageDevice(device) {
-  images[device.name] = appendNewElement(device.name + '-content', '<div id="' + device.name + '-image" class="image"></div>');
+  images[device.name] = appendNewElement(device.name + '-content', '<div id="' + device.htmlName + '-image" class="image"></div>');
 }
 
 function createGeneric1DDevice(device, autoRange, minY, maxY, labelY) {
-  var widget = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minY, 'max': maxY}, {'x': 'Time [s]', 'y': labelY}, device);
+  const widget = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minY, 'max': maxY}, {'x': 'Time [s]', 'y': labelY}, device);
   widget.setLabel(document.getElementById(device.name + '-label'));
   widgets[device.name] = [widget];
 }
 
 function createGeneric3DDevice(device, autoRange, minRange, maxRange, units) {
   appendNewElement(device.name,
-    '<select onChange="comboboxCallback(this)" class="view-selector" device="' + device.name + '">' +
+    '<select onChange="comboboxCallback(this)" class="view-selector" device="' + device.htmlName + '">' +
     '  <option>Time</option>' +
     '  <option>XY</option>' +
     '  <option>YZ</option>' +
     '  <option>XZ</option>' +
     '</select>'
   );
-  var plotAutoRange = autoRange !== TimeplotWidget.prototype.AutoRangeType.NONE;
+  const plotAutoRange = autoRange !== TimeplotWidget.prototype.AutoRangeType.NONE;
 
-  var widgetTime = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minRange, 'max': maxRange}, {'x': 'Time [s]', 'y': 'Raw'}, device);
+  const widgetTime = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minRange, 'max': maxRange}, {'x': 'Time [s]', 'y': 'Raw'}, device);
   widgetTime.setLabel(document.getElementById(device.name + '-label'));
-  var widgetXY = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 0, 'y': 1}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'x ' + units, 'y': 'y ' + units}, device);
-  var widgetYZ = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 1, 'y': 2}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'y ' + units, 'y': 'z ' + units}, device);
-  var widgetXZ = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 0, 'y': 2}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'x ' + units, 'y': 'z ' + units}, device);
+  const widgetXY = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 0, 'y': 1}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'x ' + units, 'y': 'y ' + units}, device);
+  const widgetYZ = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 1, 'y': 2}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'y ' + units, 'y': 'z ' + units}, device);
+  const widgetXZ = new PlotWidget(document.getElementById(device.name + '-content'), plotAutoRange, {'x': 0, 'y': 2}, {'min': minRange, 'max': maxRange}, {'min': minRange, 'max': maxRange}, {'x': 'x ' + units, 'y': 'z ' + units}, device);
 
   widgetXY.show(false);
   widgetYZ.show(false);
@@ -218,34 +260,34 @@ function createGeneric3DDevice(device, autoRange, minRange, maxRange, units) {
 }
 
 function createRadar(device) {
-  var widget = new RadarWidget(document.getElementById(device.name + '-content'), device);
+  const widget = new RadarWidget(document.getElementById(device.name + '-content'), device);
   widgets[device.name] = [widget];
 }
 
 function createMotor(device, autoRange, minValue, maxValue, yLabel) {
-  var customStyle = '';
+  let customStyle = '';
   if (navigator.appVersion.indexOf('Linux') !== -1)
     customStyle = ' style="width:17px;"';
-  var mean = 0.5 * (maxValue + minValue);
-  var step = 0.01 * (maxValue - minValue); // 1%
-  var slider = appendNewElement(device.name + '-content',
+  const mean = 0.5 * (maxValue + minValue);
+  const step = 0.01 * (maxValue - minValue); // 1%
+  const slider = appendNewElement(device.name + '-content',
     '<input type="range" min="' + minValue + '" max="' + maxValue + '" value="' + mean + '" step="' + step + '"' +
     ' class="motor-slider"' + customStyle +
-    ' id="' + device.name + '-slider"' +
-    ' device="' + device.name + '"' +
-    ' oninput="motorSetPosition(\'' + device.name + '\', this.value)"' +
-    ' onmousedown="motorSetPosition(\'' + device.name + '\', this.value)"' +
-    ' onmouseup="motorUnsetPosition(\'' + device.name + '\')"' +
-    ' onmouseleave="motorUnsetPosition(\'' + device.name + '\')"' +
+    ' id="' + device.htmlName + '-slider"' +
+    ' device="' + device.htmlName + '"' +
     '>');
-  var widget = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minValue, 'max': maxValue}, {'x': 'Time [s]', 'y': yLabel}, device);
+  slider.oninput = function() { motorSetPosition(device.name, slider.value); };
+  slider.onmousedown = function() { motorSetPosition(device.name, slider.value); };
+  slider.onmouseup = function() { motorUnsetPosition(device.name); };
+  slider.onmouseleave = function() { motorUnsetPosition(device.name); };
+  const widget = new TimeplotWidget(document.getElementById(device.name + '-content'), basicTimeStep, autoRange, {'min': minValue, 'max': maxValue}, {'x': 'Time [s]', 'y': yLabel}, device);
   widget.setLabel(document.getElementById(device.name + '-label'));
   widget.setSlider(slider);
   widgets[device.name] = [widget];
 }
 
 function createDifferentialWheels(device) {
-  var buttonsData = [ // tag name, button tool tip, button text
+  const buttonsData = [ // tag name, button tool tip, button text
     ['left_forward', 'Left-forward', '&#8598;'],
     ['forward', 'Forwads', '&#8593;'],
     ['right_forward', 'Right-forward', '&#8599;'],
@@ -271,17 +313,17 @@ function createDifferentialWheels(device) {
 
 // Protect all the character instances in the string by prefixing a '\' character.
 function protect(str, chars) {
-  var protectedStr = str;
-  for (var c = 0; c < chars.length; c++) {
-    var char = chars[c];
+  let protectedStr = str;
+  for (let c = 0; c < chars.length; c++) {
+    const char = chars[c];
     protectedStr = protectedStr.replace(new RegExp(char, 'g'), '\\' + char);
   }
   return protectedStr;
 }
 
 function alphabetical(a, b) {
-  var A = a.toLowerCase();
-  var B = b.toLowerCase();
+  const A = a.toLowerCase();
+  const B = b.toLowerCase();
   if (A < B)
     return -1;
   else if (A > B)
@@ -303,7 +345,7 @@ function configure(data) {
   }
 
   // Parse the devices once to prepare de device type list.
-  var deviceTypes = [];
+  let deviceTypes = [];
   if (data.type === 'DifferentialWheels')
     deviceTypes.push(data.type);
   data.devices.forEach(function(device) {
@@ -321,10 +363,14 @@ function configure(data) {
 
   // Create a device container per device.
   if (data.type === 'DifferentialWheels')
-    addDevice({'name': robotName, 'type': data.type });
+    addDevice({'name': robotName.replace(/&quot;/g, '"'), 'type': data.type });
   data.devices.forEach(function(device) {
-    if (supportedDeviceTypes.indexOf(device.type) >= 0)
+    if (supportedDeviceTypes.indexOf(device.type) >= 0) {
+      device.htmlName = device.name;
+      device.name = device.name.replace(/&quot;/g, '"');
+      device.model = device.model.replace(/&quot;/g, '"');
       addDevice(device);
+    }
   });
 
   // Set the focus on the first deviceType menu.
@@ -339,7 +385,7 @@ function configure(data) {
 }
 
 function applyToUntouchedCheckbox(checkbox, state) {
-  var checkboxIndex = touchedCheckboxes.indexOf(checkbox);
+  const checkboxIndex = touchedCheckboxes.indexOf(checkbox);
   if (checkboxIndex >= 0)
     touchedCheckboxes.splice(checkboxIndex, 1);
   else
@@ -350,9 +396,11 @@ function update(data) {
   if (data.devices == null)
     return;
   Object.keys(data.devices).forEach(function(key) {
-    var checkbox = document.getElementById(key + '-enable-checkbox');
+    const value = data.devices[key];
+    key = key.replace(/&quot;/g, '"');
 
-    var value = data.devices[key];
+    const checkbox = document.getElementById(key + '-enable-checkbox');
+
     if (value.update !== undefined && key in widgets) {
       widgets[key].forEach(function(widget) {
         value.update.forEach(function(u) {
@@ -367,8 +415,19 @@ function update(data) {
       if (checkbox)
         applyToUntouchedCheckbox(checkbox, true);
       if (value.cloudPointEnabled !== undefined) {
-        var cloudPointCheckbox = document.getElementById(key + '-cloud-point-checkbox');
+        const cloudPointCheckbox = document.getElementById(key + '-cloud-point-checkbox');
         applyToUntouchedCheckbox(cloudPointCheckbox, value.cloudPointEnabled);
+      }
+      if (value.recognitionEnabled !== undefined) {
+        const recognitionCheckbox = document.getElementById(key + '-recognition-checkbox');
+        applyToUntouchedCheckbox(recognitionCheckbox, value.recognitionEnabled);
+        const segmentationCheckbox = document.getElementById(key + '-segmentation-checkbox');
+        if (segmentationCheckbox)
+          segmentationCheckbox.disabled = !value.recognitionEnabled;
+      }
+      if (value.segmentationEnabled !== undefined) {
+        const segmentationCheckbox = document.getElementById(key + '-segmentation-checkbox');
+        applyToUntouchedCheckbox(segmentationCheckbox, value.segmentationEnabled);
       }
     } else if (value.targets !== undefined && key in widgets) {
       widgets[key][0].refreshTargets(value.targets);
@@ -379,7 +438,7 @@ function update(data) {
 }
 
 function receive(message, _robot) {
-  var data = '';
+  let data = '';
   if (message.indexOf('configure ') === 0) {
     try {
       data = JSON.parse(message.substring(10));
@@ -406,8 +465,7 @@ function receive(message, _robot) {
   if (differentialWheelsTag)
     commands.push(protect(robotName, [':', ',']) + ':' + differentialWheelsTag);
   Object.keys(motorCommands).forEach(function(deviceName) {
-    var value = motorCommands[deviceName];
-    commands.push(protect(deviceName, [':', ',']) + ':position=' + value);
+    commands.push(protect(deviceName, [':', ',']) + ':position=' + motorCommands[deviceName]);
   });
 
   if (Object.keys(commands).length !== 0) {
@@ -418,11 +476,11 @@ function receive(message, _robot) {
 
 window.onload = function() {
   // get .device-content { with: XXXpx; height: XXXpx; }
-  var tmp = document.createElement('div');
+  const tmp = document.createElement('div');
   tmp.classList.add('device-content');
   document.body.appendChild(tmp);
-  var deviceContentWidth = window.getComputedStyle(document.body.lastChild).getPropertyValue('width').replace(/px$/g, '');
-  var deviceContentHeight = window.getComputedStyle(document.body.lastChild).getPropertyValue('height').replace(/px$/g, '');
+  const deviceContentWidth = window.getComputedStyle(document.body.lastChild).getPropertyValue('width').replace(/px$/g, '');
+  const deviceContentHeight = window.getComputedStyle(document.body.lastChild).getPropertyValue('height').replace(/px$/g, '');
   document.body.removeChild(document.body.lastChild);
 
   window.robotWindow = webots.window();

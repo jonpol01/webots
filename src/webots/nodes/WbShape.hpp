@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public:
   WrMaterial *wrenMaterial() const { return mWrenMaterial; }
 
   // infrared related functions
-  void pickColor(WbRgb &pickedColor, const WbRay &ray, double *roughness = NULL, double *occlusion = NULL) const;
+  void pickColor(const WbRay &ray, WbRgb &pickedColor, double *roughness = NULL, double *occlusion = NULL) const;
 
   // for a shape lying into a boundingObject
   void connectGeometryField() const;

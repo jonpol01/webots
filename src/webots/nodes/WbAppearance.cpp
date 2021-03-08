@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -169,11 +169,11 @@ WbRgb WbAppearance::diffuseColor() const {
     return WbRgb(1.0f, 1.0f, 1.0f);
 }
 
-void WbAppearance::pickColorInTexture(WbRgb &pickedColor, const WbVector2 &uv) const {
+void WbAppearance::pickColorInTexture(const WbVector2 &uv, WbRgb &pickedColor) const {
   WbImageTexture *tex = texture();
   if (tex) {
     WbVector2 uvTransformed = transformUVCoordinate(uv);
-    tex->pickColor(pickedColor, uvTransformed);
+    tex->pickColor(uvTransformed, pickedColor);
   } else
     pickedColor.setValue(1.0, 1.0, 1.0);  // default value
 }

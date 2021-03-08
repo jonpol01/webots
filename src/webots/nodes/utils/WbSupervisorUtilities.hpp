@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,10 +44,11 @@ public:
   void handleMessage(QDataStream &stream);
   void writeAnswer(QDataStream &stream);
   void writeConfigure(QDataStream &stream);
-  void processImmediateMessages();
+  void processImmediateMessages(bool blockRegeneration = false);
   void postPhysicsStep();
   void reset();
 
+  bool shouldBeRemoved() const { return mShouldRemoveNode; }
   QStringList labelsState() const;
 
 signals:
@@ -62,27 +63,33 @@ private slots:
   void changeSimulationMode(int newMode);
   void updateDeletedNodeList(WbNode *node);
   void notifyNodeUpdate(WbNode *node);
+  void updateProtoRegeneratedFlag();
 
 private:
   WbRobot *mRobot;
   int mFoundNodeUniqueId;
   int mFoundNodeType;
+  int mFoundNodeTag;
   QString mFoundNodeModelName;
   QString mCurrentDefName;
   int mFoundNodeParentUniqueId;
+  bool mFoundNodeIsProto;
+  bool mFoundNodeIsProtoInternal;
   int mFoundFieldId;
   int mFoundFieldType;
   int mFoundFieldCount;
-  bool mGetSelectedNode;
-  bool mGetFromId;
+  bool mFoundFieldIsInternal;
+  int mGetNodeRequest;
   QList<int> mUpdatedNodeIds;
-  bool mNeedToRestartController;
   WbTransform *mNodeGetPosition;
   WbTransform *mNodeGetOrientation;
   WbSolid *mNodeGetCenterOfMass;
   WbSolid *mNodeGetContactPoints;
+  bool mGetContactPointsIncludeDescendants;
   WbSolid *mNodeGetStaticBalance;
   WbSolid *mNodeGetVelocity;
+  bool mIsProtoRegenerated;
+  bool mShouldRemoveNode;
 
   // pointer to a single integer: if not NULL, the new status has to be sent to the libController
   int *mAnimationStartStatus;
@@ -105,7 +112,8 @@ private:
   void initControllerRequests();
   void deleteControllerRequests();
   void writeNode(QDataStream &stream, const WbBaseNode *baseNode, int messageType);
-  const WbNode *getNodeFromDEF(const QString &defName, const WbNode *fromNode = NULL);
+  const WbNode *getNodeFromDEF(const QString &defName, bool allowSearchInProto, const WbNode *fromNode = NULL);
+  const WbNode *getNodeFromProtoDEF(const WbNode *fromNode, const QString &defName) const;
   WbNode *getProtoParameterNodeInstance(WbNode *const node) const;
   void applyFieldSetRequest(struct field_set_request *request);
   QString readString(QDataStream &);

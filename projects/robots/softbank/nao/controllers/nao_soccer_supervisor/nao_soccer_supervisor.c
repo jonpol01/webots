@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2019 Cyberbotics Ltd.
+ * Copyright 1996-2021 Cyberbotics Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ enum { X, Y, Z };
 #define MAX_NUM_ROBOTS (2 * MAX_NUM_PLAYERS)
 
 // field dimensions (in meters) according to the SPL Nao Rule Book
+// clang-format off
+// clang-format 11.0.0 has problems with AlignTrailingComments when the line starts with a hash (#).
 #define FIELD_SIZE_X 9.050        // official size of the field
 #define FIELD_SIZE_Z 6.050        // for the 2014 competition
 #define CIRCLE_DIAMETER 1.550     // soccer field's central circle
@@ -76,6 +78,7 @@ enum { X, Y, Z };
 #define THROW_IN_LINE_OFFSET 0.400  // offset from side line
 #define LINE_WIDTH 0.050            // white lines
 #define BALL_RADIUS 0.0325
+// clang-format on
 
 // throw-in lines
 const double THROW_IN_LINE_X_END = THROW_IN_LINE_LENGTH / 2;
@@ -244,15 +247,19 @@ static void display() {
   // display team names and current score
   char text[64];
   if (control_data.firstHalf) {
-    snprintf(text, sizeof(text), "%s - %d", get_team_name(TEAM_RED), control_data.teams[TEAM_RED].score);
-    wb_supervisor_set_label(0, text, 0.05, 0.03, FONT_SIZE, 0xec0f0f, 0.0, "Arial");  // red
-    snprintf(text, sizeof(text), "%d - %s", control_data.teams[TEAM_BLUE].score, get_team_name(TEAM_BLUE));
-    wb_supervisor_set_label(1, text, 0.99 - 0.025 * strlen(text), 0.03, FONT_SIZE, 0x0000ff, 0.0, "Arial");  // blue
+    int ret = snprintf(text, sizeof(text), "%s - %d", get_team_name(TEAM_RED), control_data.teams[TEAM_RED].score);
+    if (ret >= 0)
+      wb_supervisor_set_label(0, text, 0.05, 0.03, FONT_SIZE, 0xec0f0f, 0.0, "Arial");  // red
+    ret = snprintf(text, sizeof(text), "%d - %s", control_data.teams[TEAM_BLUE].score, get_team_name(TEAM_BLUE));
+    if (ret >= 0)
+      wb_supervisor_set_label(1, text, 0.99 - 0.025 * strlen(text), 0.03, FONT_SIZE, 0x0000ff, 0.0, "Arial");  // blue
   } else {
-    snprintf(text, sizeof(text), "%s - %d", get_team_name(TEAM_BLUE), control_data.teams[TEAM_BLUE].score);
-    wb_supervisor_set_label(0, text, 0.05, 0.03, FONT_SIZE, 0x0000ff, 0.0, "Arial");  // blue
-    snprintf(text, sizeof(text), "%d - %s", control_data.teams[TEAM_RED].score, get_team_name(TEAM_RED));
-    wb_supervisor_set_label(1, text, 0.99 - 0.025 * strlen(text), 0.03, FONT_SIZE, 0xec0f0f, 0.0, "Arial");  // red
+    int ret = snprintf(text, sizeof(text), "%s - %d", get_team_name(TEAM_BLUE), control_data.teams[TEAM_BLUE].score);
+    if (ret >= 0)
+      wb_supervisor_set_label(0, text, 0.05, 0.03, FONT_SIZE, 0x0000ff, 0.0, "Arial");  // blue
+    ret = snprintf(text, sizeof(text), "%d - %s", control_data.teams[TEAM_RED].score, get_team_name(TEAM_RED));
+    if (ret >= 0)
+      wb_supervisor_set_label(1, text, 0.99 - 0.025 * strlen(text), 0.03, FONT_SIZE, 0xec0f0f, 0.0, "Arial");  // red
   }
 
   // display game state or remaining time
@@ -824,6 +831,7 @@ static void step() {
   if (step_count % attempt_frequency == 0) {
     open_tcp_connections();
 
+    // cppcheck-suppress knownConditionTrueFalse
     if (attempt_frequency < 256)
       attempt_frequency *= 2;
   }

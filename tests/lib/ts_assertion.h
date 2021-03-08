@@ -18,7 +18,7 @@
   } while (0)
 
 #define TS_DOUBLE_IN_DELTA(value, expected, delta) \
-  ((isnan(value) && isnan(expected)) || (fabs((value) - (expected)) <= (delta)))
+  ((isnan(value) && isnan(expected)) || (isinf(value) && isinf(expected)) || (fabs((value) - (expected)) <= (delta)))
 
 void ts_assert_boolean_equal(bool value, const char *error_message, ...) {
   bool correct = value;
@@ -105,6 +105,38 @@ void ts_assert_doubles_equal(int size, const double *value, const double *expect
       correct = false;
       break;
     }
+  }
+  TS_FINAL_CHECK();
+}
+
+// An euler and axis rotation equals to another.
+void ts_assert_rotation_equals(const double *rot_a, const double *rot_b, double tolerance, const char *error_message, ...) {
+  // Inspired from WbRotation::normalizeAngle()
+  double angle_a = rot_a[3];
+  while (angle_a < -M_PI)
+    angle_a += 2.0 * M_PI;
+  while (angle_a > M_PI)
+    angle_a -= 2.0 * M_PI;
+  double angle_b = rot_b[3];
+  while (angle_b < -M_PI)
+    angle_b += 2.0 * M_PI;
+  while (angle_b > M_PI)
+    angle_b -= 2.0 * M_PI;
+
+  // Inspired from WbRotation::almostEquals()
+  bool correct = false;
+  if (fabs(angle_a - angle_b) < tolerance) {
+    if (fabs(angle_a) < tolerance)
+      correct = true;  // axis can be different but rotation is the same
+    else
+      correct =
+        fabs(rot_a[0] - rot_b[0]) < tolerance && fabs(rot_a[1] - rot_b[1]) < tolerance && fabs(rot_a[2] - rot_b[2]) < tolerance;
+  } else if (fabs(angle_a + angle_b) < tolerance) {
+    if (fabs(angle_a) < tolerance)
+      correct = true;  // axis can be different but rotation is the same
+    else
+      correct =
+        fabs(rot_a[0] + rot_b[0]) < tolerance && fabs(rot_a[1] + rot_b[1]) < tolerance && fabs(rot_a[2] + rot_b[2]) < tolerance;
   }
   TS_FINAL_CHECK();
 }

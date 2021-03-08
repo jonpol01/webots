@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 1996-2019 Cyberbotics Ltd.
+# Copyright 1996-2021 Cyberbotics Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,13 +28,12 @@ from pyflakes import checker
 from pyflakes.reporter import Reporter
 
 skippedDirectories = [
+    '.git',
     'dependencies',
     'lib',
     'projects/robots/mobsya/thymio/controllers/thymio2_aseba/aseba',
     'projects/robots/robotis/darwin-op/libraries/python',
-    'projects/default/resources/sumo',
-    'projects/languages/ros/controllers/ros_python/kinetic',
-    'projects/languages/ros/controllers/ros_python/python'
+    'projects/default/resources/sumo'
 ]
 
 
@@ -56,7 +55,7 @@ class FlakesReporter(Reporter):
         self.error += '%s:%d: %s\n' % (filename, lineno, msg)
         self.error += line + '\n'
         if offset is not None:
-            self._stderr.write(" " * (offset + 1) + "^\n")
+            self.error += ' ' * (offset + 1) + '^\n'
 
     def flake(self, message):
         """Add message to error string."""
@@ -156,6 +155,10 @@ class TestCodeFormat(unittest.TestCase):
                 if shouldContinue:
                     continue
                 filePath = os.path.join(rootPath, fileName)
+                if sys.version_info[0] < 3:
+                    with open(filePath) as file:
+                        if file.readline().startswith('#!/usr/bin/env python3'):
+                            continue
                 self.files.append(filePath)
 
     def test_pep8_conformance(self):

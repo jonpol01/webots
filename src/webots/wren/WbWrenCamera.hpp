@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -137,6 +137,7 @@ private:
   float mMaxRange;
   float mFieldOfView;
   char mType;
+  bool mIsColor;
   bool mAntiAliasing;
   bool mIsSpherical;
   bool mFirstRenderingCall;
@@ -162,6 +163,7 @@ private:
 
   QVector<WrPostProcessingEffect *> mPostProcessingEffects;
   WrPostProcessingEffect *mSphericalPostProcessingEffect;
+  WrPostProcessingEffect *mUpdateTextureFormatEffect;
   WrFrameBuffer *mResultFrameBuffer;
   WrTextureInternalFormat mTextureFormat;
 

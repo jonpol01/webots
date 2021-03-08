@@ -13,7 +13,7 @@ In order to get the `Keyboard` instance, you should call the `getKeyboard` funct
 #### `wb_keyboard_get_sampling_period`
 #### `wb_keyboard_get_key`
 
-%tab-component
+%tab-component "language"
 
 %tab "C"
 
@@ -145,7 +145,8 @@ key = wb_keyboard_get_key()
 
 *keyboard reading function*
 
-These functions allow you to read a key pressed on the computer keyboard from a controller program while the 3D window of Webots is selected and the simulation is running.
+These functions allow a controller program to read keys pressed on the computer keyboard when the 3D window of Webots is selected and the simulation is running.
+You may have to click inside the 3D window, so that it gets selected (e.g., active) and the key press events can be sent to the controller program.
 First, it is necessary to enable keyboard input by calling the `wb_keyboard_enable` function.
 The `sampling_period` parameter is expressed in milliseconds, and defines how frequently readings are updated.
 Note that the first key will be available only after the first sampling period elapsed.
@@ -160,12 +161,12 @@ The function can be called up to 7 times to detect up to 7 simultaneous keys pre
 The `wb_keyboard_disable` function should be used to stop the keyboard readings.
 
 > **Note** [C++]: The keyboard predefined values are located into a (static) enumeration of the Keyboard class.
-For example, `Keyboard.CONTROL` corresponds to the *Control* key stroke.
+For example, `Keyboard.CONTROL` corresponds to the <kbd>ctrl</kbd> key stroke.
 
 <!-- -->
 
 > **Note** [Java]: The keyboard predefined values are final integers located in the Keyboard class.
-For example, *Ctrl+B* can be tested like this:
+For example, <kbd>ctrl</kbd>-<kbd>B</kbd> can be tested like this:
 
 > ```java
 > int key=keyboard.getKey()
@@ -176,7 +177,7 @@ For example, *Ctrl+B* can be tested like this:
 <!-- -->
 
 > **Note** [Python]: The keyboard predefined values are integers located into the Keyboard class.
-For example, *Ctrl+B* can be tested like this:
+For example, <kbd>ctrl</kbd>-<kbd>B</kbd> can be tested like this:
 
 > ```python
 > key=keyboard.getKey()

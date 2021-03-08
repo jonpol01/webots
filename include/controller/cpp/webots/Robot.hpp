@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,14 +68,13 @@ namespace webots {
     virtual int step(int duration);
     UserInputEvent waitForUserInputEvent(UserInputEvent event_type, int timeout);
     std::string getName() const;
-    std::string getControllerName() const;
-    std::string getControllerArguments() const;
+    std::string getUrdf(std::string prefix = "") const;
     double getTime() const;
     std::string getModel() const;
     std::string getCustomData() const;
     void setCustomData(const std::string &data);
     Mode getMode() const;
-    void setMode(Mode, void *);
+    void setMode(Mode, const char *);
     bool getSupervisor() const;
     bool getSynchronization() const;
     std::string getProjectPath() const;
@@ -83,6 +82,7 @@ namespace webots {
     double getBasicTimeStep() const;
     int getNumberOfDevices() const;
     Device *getDeviceByIndex(int index);
+    Device *getDevice(const std::string &name);
     int getType() const;
 
     virtual void batterySensorEnable(int samplingPeriod);
@@ -128,7 +128,7 @@ namespace webots {
     void setData(const std::string &data);
 
     // internal functions
-    static Device *getDevice(int tag);
+    static Device *getDeviceFromTag(int tag);
     static int getDeviceTypeFromTag(int tag);
     static std::string getDeviceNameFromTag(int tag);
     static int getDeviceTagFromIndex(int index);

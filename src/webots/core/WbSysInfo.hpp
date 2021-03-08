@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,9 @@ namespace WbSysInfo {
 #ifdef __linux__
   const QString &linuxCpuModelName();
   bool isRootUser();
+  inline bool isSnap() { return qgetenv("SNAP_NAME") == "webots"; }
+#else
+  inline bool isSnap() { return false; }
 #endif
   QString environmentVariable(const QString &name);
   void setEnvironmentVariable(const QString &name, const QString &value);
@@ -46,6 +49,8 @@ namespace WbSysInfo {
   quint32 gpuVendorId(QOpenGLFunctions *gl);
   int intelGPUGeneration(QOpenGLFunctions *gl);
   bool isAmdLowEndGpu(QOpenGLFunctions *gl);
+#else
+  bool isLowEndGpu();
 #endif
   const void initializeOpenGlInfo();
   const QString &openGLRenderer();

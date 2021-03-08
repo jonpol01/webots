@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ signals:
   void childAdded(WbBaseNode *child);
   void finalizedChildAdded(WbBaseNode *child);  // emit signal when inserting child after current node is finalized
   void notifyParentSlot(WbBaseNode *child);
+  void notifyParentJoint(WbBaseNode *child);
   void childFinalizationHasProgressed(const int progress);  // 0: beginning, 100: end
 
 protected:
@@ -137,7 +138,7 @@ private:
 
 public slots:
   void cancelFinalization();
-  void insertChildFromSlot(WbBaseNode *decendant);
+  void insertChildFromSlotOrJoint(WbBaseNode *decendant);
 
 private slots:
   void insertChildPrivate(int index);

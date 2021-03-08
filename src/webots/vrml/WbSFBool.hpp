@@ -1,4 +1,4 @@
-// Copyright 1996-2019 Cyberbotics Ltd.
+// Copyright 1996-2021 Cyberbotics Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ class WbSFBool : public WbSingleValue {
   Q_OBJECT
 
 public:
-  WbSFBool(WbTokenizer *tokenizer, const QString &worldPath) { read(tokenizer, worldPath); }
+  WbSFBool(WbTokenizer *tokenizer, const QString &worldPath) { readSFBool(tokenizer, worldPath); }
   WbSFBool(const WbSFBool &other);
   virtual ~WbSFBool() {}
-  void read(WbTokenizer *tokenizer, const QString &worldPath) override;
+  void read(WbTokenizer *tokenizer, const QString &worldPath) override { readSFBool(tokenizer, worldPath); }
   void write(WbVrmlWriter &writer) const override { writer << toString(WbPrecision::DOUBLE_MAX); }
   WbValue *clone() const override { return new WbSFBool(*this); }
   bool equals(const WbValue *other) const override;
@@ -49,6 +49,7 @@ public:
 
 private:
   bool mValue;
+  void readSFBool(WbTokenizer *tokenizer, const QString &worldPath);
 };
 
 #endif
